@@ -54,7 +54,6 @@ export const RegisterModal = () => {
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(45);
-  const [generatedOtpHint, setGeneratedOtpHint] = useState('');
 
   // Countdown timer for OTP resend
   useEffect(() => {
@@ -155,7 +154,6 @@ export const RegisterModal = () => {
     setIsSubmitting(true);
     const otpRes = sendEmailOtp(email, true, name);
     if (otpRes && otpRes.success) {
-      setGeneratedOtpHint(otpRes.otp);
       setIsOtpStep(true);
       setOtpCountdown(45);
       setOtpCode('');

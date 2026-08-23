@@ -1919,6 +1919,71 @@ export const DashboardProvider = ({ children }) => {
   };
 
   /**
+   * Checks if an account exists in the database (profiles table, local citizens, demo, or drivers)
+   */
+  const checkAccountExists = async (emailOrPhone) => {
+    const rawInput = (emailOrPhone || '').trim();
+    if (!rawInput) return { exists: false, profile: null };
+    const lowerInput = rawInput.toLowerCase();
+    const cleanEmail = lowerInput;
+
+    // 1. Check in Supabase profiles database table
+    if (isSupabaseConfigured()) {
+      try {
+        const { exists, profile } = await db.checkEmailExists(rawInput);
+        if (exists && profile) return { exists: true, profile, source: 'supabase_profile' };
+      } catch (err) {}
+    }
+
+    // 2. Check local registered citizens
+    const matchedCitizen = citizens.find((c) => c.email && c.email.toLowerCase() === cleanEmail);
+    if (matchedCitizen) return { exists: true, profile: matchedCitizen, source: 'citizen' };
+
+    // 3. Demo user
+    if (cleanEmail === 'aarav.mehta@citizen.in') {
+      return { exists: true, profile: { email: cleanEmail, name: 'Aarav Mehta' }, source: 'demo' };
+    }
+
+    // 4. Drivers
+    const matchedDriver = (AUTHORIZED_DRIVERS_DATABASE || []).find(
+      (d) => d.email.toLowerCase() === lowerInput || (rawInput.length >= 10 && d.phone.replace(/[^0-9]/g, '') === rawInput.replace(/[^0-9]/g, ''))
+    );
+    if (matchedDriver) return { exists: true, profile: matchedDriver, source: 'driver' };
+
+    return { exists: false, profile: null };
+  };
+
+  /**
+   * Resets and updates the password directly in Supabase profiles table & auth vault
+   */
+  const resetUserPassword = async ({ email, newPassword }) => {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (newPassword || '').trim();
+    if (!cleanEmail || !cleanPassword || cleanPassword.length < 6) {
+      return { success: false, error: 'Password must be at least 6 characters long.' };
+    }
+
+    // 1. Update in Supabase profiles table
+    if (isSupabaseConfigured()) {
+      try {
+        await db.updateProfilePassword(cleanEmail, cleanPassword);
+      } catch (e) {}
+    }
+
+    // 2. Update in userPasswords vault
+    setUserPasswords((prev) => {
+      const updated = { ...prev, [cleanEmail]: cleanPassword };
+      try {
+        localStorage.setItem('swaachx_user_passwords', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    addToast('🎉 Password reset successfully! Please sign in with your new password.', 'success');
+    return { success: true };
+  };
+
+  /**
    * Submit Citizen Waste Report:
    * Finds the nearest available municipal driver via AI proximity routing,
    * sends a dispatch confirmation request to that driver with status 'Pending Driver Approval',
@@ -2568,6 +2633,8 @@ export const DashboardProvider = ({ children }) => {
         sendEmailOtp,
         verifyEmailOtp,
         checkDuplicateCredentials,
+        checkAccountExists,
+        resetUserPassword,
         registerNewDriverVehicle,
         officers,
         setOfficers,

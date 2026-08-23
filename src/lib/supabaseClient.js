@@ -226,6 +226,48 @@ export const db = {
     return { verified: false, profile: null };
   },
 
+  async checkEmailExists(input) {
+    if (!isSupabaseConfigured() || !input) return { exists: false, profile: null };
+    try {
+      const cleanInput = input.trim().toLowerCase();
+      const isEmail = cleanInput.includes('@');
+      let query = supabase.from('profiles').select('*');
+      if (isEmail) {
+        query = query.ilike('email', cleanInput);
+      } else {
+        query = query.or(`phone.ilike.%${cleanInput}%,email.ilike.%${cleanInput}%`);
+      }
+      const { data, error } = await query.limit(1);
+      if (!error && data && data.length > 0) {
+        return { exists: true, profile: data[0] };
+      }
+    } catch (e) {
+      console.warn('checkEmailExists exception:', e);
+    }
+    return { exists: false, profile: null };
+  },
+
+  async updateProfilePassword(emailOrPhone, newPassword) {
+    if (!isSupabaseConfigured() || !emailOrPhone || !newPassword) return { success: false };
+    try {
+      const clean = emailOrPhone.trim().toLowerCase();
+      const isEmail = clean.includes('@');
+      let query = supabase.from('profiles').update({ password: newPassword });
+      if (isEmail) {
+        query = query.ilike('email', clean);
+      } else {
+        query = query.or(`phone.ilike.%${clean}%,email.ilike.%${clean}%`);
+      }
+      const { data, error } = await query.select();
+      if (!error) {
+        return { success: true, data };
+      }
+    } catch (e) {
+      console.warn('updateProfilePassword exception:', e);
+    }
+    return { success: false };
+  },
+
   async getCitizens() {
     if (!isSupabaseConfigured()) return { data: [], error: null };
     const { data, error } = await supabase

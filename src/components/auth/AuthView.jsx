@@ -24,6 +24,8 @@ import {
   Sparkles,
   CheckCircle2,
   Award,
+  ShieldCheck,
+  KeyRound,
 } from 'lucide-react';
 import { AdminLoginModal } from '../admin/AdminLoginModal';
 
@@ -36,6 +38,8 @@ export const AuthView = () => {
     sendEmailOtp,
     verifyEmailOtp,
     checkDuplicateCredentials,
+    checkAccountExists,
+    resetUserPassword,
     isAdminLoginOpen,
     openAdminLogin,
     closeAdminLogin,
@@ -58,11 +62,17 @@ export const AuthView = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Forgot Password state
+  const [isForgotMode, setIsForgotMode] = useState(false);
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
   // OTP Verification state
   const [isOtpStep, setIsOtpStep] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(45);
-  const [generatedOtpHint, setGeneratedOtpHint] = useState('');
 
   // Countdown timer for OTP resend
   useEffect(() => {
@@ -185,7 +195,6 @@ export const AuthView = () => {
     setIsSubmitting(true);
     const otpRes = sendEmailOtp(email, true, name);
     if (otpRes && otpRes.success) {
-      setGeneratedOtpHint(otpRes.otp);
       setIsOtpStep(true);
       setOtpCountdown(45);
       setOtpCode('');
@@ -268,6 +277,87 @@ export const AuthView = () => {
     }
   };
 
+  /**
+   * Forgot Password Trigger:
+   * Checks database presence of email/profile.
+   * If yes -> dispatches email OTP and opens reset form.
+   * If no -> redirects to registration.
+   */
+  const handleForgotPasswordClick = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setErrors({ email: 'Please enter your registered email address first' });
+      addToast('Please enter your registered email address in the field to reset password.', 'error');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const checkRes = await checkAccountExists(cleanEmail);
+      if (!checkRes.exists) {
+        addToast('No registered account found with this email in the database. Redirecting to registration...', 'warning');
+        setAuthMode('register');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Account exists in database -> Dispatch OTP & Open Reset Interface
+      sendEmailOtp(cleanEmail);
+      setIsForgotMode(true);
+      setErrors({});
+      setForgotOtp('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err) {
+      console.warn('Forgot password check exception:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e) => {
+    e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    const errs = {};
+
+    if (!forgotOtp.trim() || forgotOtp.trim().length !== 6) {
+      errs.otp = 'Please enter the complete 6-digit OTP received in email';
+    }
+    if (!newPassword) {
+      errs.newPassword = 'New password is required';
+    } else if (newPassword.length < 6) {
+      errs.newPassword = 'Password must be at least 6 characters long';
+    }
+    if (newPassword !== confirmNewPassword) {
+      errs.confirmNewPassword = 'Passwords do not match';
+    }
+
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+
+    setIsSubmitting(true);
+    // 1. Verify OTP
+    const verifyRes = await verifyEmailOtp(cleanEmail, forgotOtp);
+    if (!verifyRes || !verifyRes.success) {
+      setErrors({ otp: verifyRes?.error || 'Invalid or expired verification code' });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // 2. Update password in database profiles table
+    const updateRes = await resetUserPassword({ email: cleanEmail, newPassword });
+    if (updateRes?.success) {
+      setIsForgotMode(false);
+      setPassword('');
+      setErrors({});
+    } else {
+      setErrors({ newPassword: updateRes?.error || 'Failed to update password' });
+    }
+    setIsSubmitting(false);
+  };
+
   return (
     <div
       style={{
@@ -326,7 +416,7 @@ export const AuthView = () => {
         </div>
 
         {/* Mode Switcher: Sign In vs Register with Sliding Glider */}
-        {!isOtpStep && (
+        {!isOtpStep && !isForgotMode && (
           <div style={{ padding: '16px 24px 0' }}>
             <div className="auth-segmented-control">
               <div className={`auth-segmented-glider ${authMode === 'register' ? 'register' : ''}`} />
@@ -369,13 +459,12 @@ export const AuthView = () => {
                   width: '48px',
                   height: '48px',
                   borderRadius: '50%',
-                  background: 'var(--primary-50)',
+                  background: 'rgba(5, 150, 105, 0.1)',
                   color: 'var(--primary-600)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   margin: '0 auto 12px',
-                  border: '1px solid var(--primary-200)',
                 }}
               >
                 <Mail size={22} />
@@ -390,14 +479,13 @@ export const AuthView = () => {
             </div>
 
             <form onSubmit={handleVerifyOtpAndRegister}>
-              <div className="form-group" style={{ marginBottom: '18px' }}>
+              <div className="form-group" style={{ marginBottom: '20px' }}>
                 <label className="form-label" style={{ textAlign: 'center', display: 'block' }}>
                   <span>Enter 6-Digit Email OTP</span>
                 </label>
                 <input
                   type="text"
                   maxLength={6}
-                  autoFocus
                   placeholder="• • • • • •"
                   value={otpCode}
                   onChange={(e) => {
@@ -484,6 +572,121 @@ export const AuthView = () => {
               </div>
             </form>
           </div>
+        ) : isForgotMode ? (
+          <form onSubmit={handleResetPasswordSubmit} className="animate-tab-content" style={{ padding: '20px 24px 28px' }}>
+            <div style={{ marginBottom: '16px', background: 'rgba(5, 150, 105, 0.08)', padding: '14px 16px', borderRadius: '12px', border: '1px solid rgba(5, 150, 105, 0.2)' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--primary-800)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                <ShieldCheck size={16} />
+                <span>Database Profile Found</span>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--primary-700)', margin: 0 }}>
+                We've sent a 6-digit OTP code to <strong>{email}</strong>. Enter it below along with your new password.
+              </p>
+            </div>
+
+            {/* 6-Digit OTP */}
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+              <label className="form-label">
+                <span>Enter 6-Digit Email OTP</span>
+                <span style={{ color: 'var(--accent-rose)' }}>*</span>
+              </label>
+              <div style={{ position: 'relative' }}>
+                <KeyRound size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Enter 6-digit OTP..."
+                  value={forgotOtp}
+                  onChange={(e) => setForgotOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                  className="form-input"
+                  style={{ paddingLeft: '36px', letterSpacing: '3px', fontWeight: 700, fontFamily: 'var(--font-mono)' }}
+                  required
+                />
+              </div>
+              {errors.otp && <span style={{ fontSize: '11px', color: 'var(--accent-rose)', marginTop: '4px', display: 'block' }}>{errors.otp}</span>}
+            </div>
+
+            {/* New Password */}
+            <div className="form-group" style={{ marginBottom: '14px' }}>
+              <label className="form-label">
+                <span>New Password</span>
+                <span style={{ color: 'var(--accent-rose)' }}>*</span>
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder="At least 6 characters..."
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="form-input"
+                  style={{ paddingLeft: '36px', paddingRight: '36px' }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '2px',
+                  }}
+                >
+                  {showNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+              {errors.newPassword && <span style={{ fontSize: '11px', color: 'var(--accent-rose)', marginTop: '4px', display: 'block' }}>{errors.newPassword}</span>}
+            </div>
+
+            {/* Confirm New Password */}
+            <div className="form-group" style={{ marginBottom: '20px' }}>
+              <label className="form-label">
+                <span>Confirm New Password</span>
+                <span style={{ color: 'var(--accent-rose)' }}>*</span>
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder="Re-enter new password..."
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  className="form-input"
+                  style={{ paddingLeft: '36px' }}
+                  required
+                />
+              </div>
+              {errors.confirmNewPassword && <span style={{ fontSize: '11px', color: 'var(--accent-rose)', marginTop: '4px', display: 'block' }}>{errors.confirmNewPassword}</span>}
+            </div>
+
+            {/* Submit CTA */}
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ width: '100%', padding: '11px', fontSize: '13px', marginBottom: '12px', fontWeight: 800 }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Updating Database Password...' : 'Save New Password & Continue'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsForgotMode(false);
+                setErrors({});
+              }}
+              className="btn btn-secondary"
+              style={{ width: '100%', padding: '10px', fontSize: '12.5px' }}
+            >
+              Back to Sign In
+            </button>
+          </form>
         ) : (
           /* Main Form with Smooth Tab Content Animation */
           <form key={authMode} onSubmit={handleSubmit} className="animate-tab-content" style={{ padding: '16px 24px 24px' }}>
@@ -757,7 +960,8 @@ export const AuthView = () => {
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
                 <button
                   type="button"
-                  onClick={() => addToast('Password reset link dispatched to registered email.', 'info')}
+                  onClick={handleForgotPasswordClick}
+                  disabled={isSubmitting}
                   style={{
                     background: 'none',
                     border: 'none',

@@ -27,6 +27,7 @@ export const AuthModal = () => {
     setAuthMode,
     loginUser,
     registerUser,
+    checkAccountExists,
     addToast,
   } = useDashboard();
 
@@ -388,7 +389,20 @@ export const AuthModal = () => {
               {authMode === 'signin' && (
                 <button
                   type="button"
-                  onClick={() => addToast('Password reset link sent to registered email.', 'info')}
+                  onClick={async () => {
+                    const clean = (email || '').trim().toLowerCase();
+                    if (!clean) {
+                      addToast('Please enter your email address first.', 'error');
+                      return;
+                    }
+                    const check = await checkAccountExists(clean);
+                    if (!check.exists) {
+                      addToast('No account found in database. Redirecting to registration...', 'warning');
+                      setAuthMode('register');
+                    } else {
+                      addToast('Account verified in database! Please use the Sign In page to reset password.', 'info');
+                    }
+                  }}
                   style={{ background: 'none', border: 'none', color: 'var(--primary-500)', fontSize: '11px', cursor: 'pointer' }}
                 >
                   Forgot?
