@@ -352,7 +352,12 @@ export const DustbinMap = ({
               }}
             >
               <Popup>
-                <div style={{ padding: '4px', minWidth: '200px', color: '#0f172a' }}>
+                <div
+                  style={{ padding: '4px', minWidth: '200px', color: '#0f172a', cursor: 'pointer' }}
+                  onClick={() => {
+                    if (onSelectDustbin) onSelectDustbin(bin);
+                  }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 800, color: '#64748b' }}>
                       {bin.id}
@@ -380,7 +385,10 @@ export const DustbinMap = ({
 
                   {onStartRoute && (
                     <button
-                      onClick={() => onStartRoute(bin)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onStartRoute(bin);
+                      }}
                       style={{
                         width: '100%',
                         padding: '6px',
@@ -403,9 +411,14 @@ export const DustbinMap = ({
                 </div>
               </Popup>
 
-              <Tooltip direction="top" offset={[0, -20]}>
-                <span style={{ fontWeight: 700 }}>
-                  {bin.name} ({bin.fillLevel}% Full)
+              <Tooltip direction="top" offset={[0, -20]} permanent={false}>
+                <span
+                  style={{ fontWeight: 700, cursor: 'pointer' }}
+                  onClick={() => {
+                    if (onSelectDustbin) onSelectDustbin(bin);
+                  }}
+                >
+                  {bin.name}
                 </span>
               </Tooltip>
             </Marker>
