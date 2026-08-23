@@ -1746,61 +1746,80 @@ export const AdminDashboardView = () => {
             style={{
               position: 'fixed',
               inset: 0,
-              background: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(8px)',
-              zIndex: 9999,
+              background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              zIndex: 99999,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               padding: '16px',
+              boxSizing: 'border-box',
             }}
+            onClick={() => setIsDriverRegisterOpen(false)}
           >
             <div
-              className="glass-card"
+              className="glass-card animate-scale-in"
               style={{
                 width: '100%',
-                maxWidth: '560px',
-                background: '#0f172a',
-                border: '1px solid rgba(139, 92, 246, 0.4)',
-                borderRadius: '16px',
+                maxWidth: '600px',
+                background: 'var(--bg-surface, #ffffff)',
+                border: '1px solid var(--border-subtle, #e2e8f0)',
+                borderRadius: 'var(--radius-xl, 20px)',
                 padding: '24px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.22), 0 0 30px rgba(124, 58, 237, 0.08)',
                 maxHeight: '90vh',
                 overflowY: 'auto',
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div
                     style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
                       background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#ffffff',
+                      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+                      flexShrink: 0,
                     }}
                   >
-                    <UserPlus size={18} />
+                    <UserPlus size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
                       Register New Driver & Vehicle
                     </h3>
-                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                    <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
                       Chief Fleet Operations Officer (North/West Command) • Direct Database Provisioning
                     </p>
                   </div>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => setIsDriverRegisterOpen(false)}
-                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'var(--bg-surface-elevated, #f1f5f9)',
+                    border: '1px solid var(--border-subtle, #e2e8f0)',
+                    color: 'var(--text-muted, #64748b)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                  title="Close"
                 >
-                  <X size={20} />
+                  <X size={16} />
                 </button>
               </div>
 
@@ -1808,8 +1827,8 @@ export const AdminDashboardView = () => {
               <form onSubmit={handleDriverRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Driver Full Name <span style={{ color: '#f43f5e' }}>*</span>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+                      Driver Full Name <span style={{ color: 'var(--accent-rose, #e11d48)' }}>*</span>
                     </label>
                     <input
                       type="text"
@@ -1821,18 +1840,18 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        fontSize: '12.5px',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
+                        fontSize: '13px',
                         outline: 'none',
                       }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Mobile Phone Number <span style={{ color: '#f43f5e' }}>*</span>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+                      Mobile Phone Number <span style={{ color: 'var(--accent-rose, #e11d48)' }}>*</span>
                     </label>
                     <input
                       type="tel"
@@ -1844,10 +1863,10 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        fontSize: '12.5px',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
+                        fontSize: '13px',
                         outline: 'none',
                       }}
                     />
@@ -1857,52 +1876,51 @@ export const AdminDashboardView = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
                         Driver Badge ID
                       </label>
-                      <span style={{ fontSize: '9.5px', color: '#a78bfa', fontWeight: 700 }}>⚡ Auto-Assigned</span>
+                      <span style={{ fontSize: '9.5px', color: '#7c3aed', fontWeight: 800, background: '#f5f3ff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #ddd6fe' }}>⚡ Auto-Assigned</span>
                     </div>
                     <input
                       type="text"
-                      placeholder={`e.g. DRV-8${nextBadgeSuffix}`}
+                      readOnly
                       value={driverFormData.driverBadge}
-                      onChange={(e) => setDriverFormData({ ...driverFormData, driverBadge: e.target.value })}
                       style={{
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#a78bfa',
+                        border: '1.5px dashed #c4b5fd',
+                        background: '#f5f3ff',
+                        color: '#6d28d9',
                         fontWeight: 700,
                         fontSize: '12.5px',
                         outline: 'none',
-                        fontFamily: 'monospace',
+                        fontFamily: 'var(--font-mono, monospace)',
                       }}
                     />
                   </div>
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
                         Unique Fleet Email
                       </label>
-                      <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 700 }}>⚡ Generated from Name</span>
+                      <span style={{ fontSize: '9.5px', color: '#0284c7', fontWeight: 800, background: '#f0f9ff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bae6fd' }}>⚡ Generated from Name</span>
                     </div>
                     <input
                       type="email"
-                      placeholder="e.g. kailash.solanki.811@wastefleet.org"
-                      value={driverFormData.driverEmail}
-                      onChange={(e) => setDriverFormData({ ...driverFormData, driverEmail: e.target.value })}
+                      readOnly
+                      value={driverFormData.driverEmail || `driver.${nextBadgeSuffix}@wastefleet.org`}
                       style={{
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#38bdf8',
-                        fontSize: '12.5px',
+                        border: '1.5px dashed #7dd3fc',
+                        background: '#f0f9ff',
+                        color: '#0369a1',
+                        fontSize: '12px',
                         outline: 'none',
+                        fontFamily: 'var(--font-mono, monospace)',
                       }}
                     />
                   </div>
@@ -1911,54 +1929,52 @@ export const AdminDashboardView = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
                         Security PIN / Password
                       </label>
-                      <span style={{ fontSize: '9.5px', color: '#34d399', fontWeight: 700 }}>⚡ Auto-Key</span>
+                      <span style={{ fontSize: '9.5px', color: '#059669', fontWeight: 800, background: '#ecfdf5', padding: '2px 6px', borderRadius: '4px', border: '1px solid #a7f3d0' }}>⚡ Auto-Key</span>
                     </div>
                     <input
                       type="text"
-                      placeholder={`e.g. FLT-8${nextBadgeSuffix}-AUTH`}
                       value={driverFormData.driverPin}
                       onChange={(e) => setDriverFormData({ ...driverFormData, driverPin: e.target.value })}
                       style={{
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#34d399',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: '#059669',
                         fontWeight: 700,
                         fontSize: '12.5px',
                         outline: 'none',
-                        fontFamily: 'monospace',
+                        fontFamily: 'var(--font-mono, monospace)',
                       }}
                     />
                   </div>
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
                         Vehicle License Plate
                       </label>
-                      <span style={{ fontSize: '9.5px', color: '#fbbf24', fontWeight: 700 }}>⚡ Auto-Assigned</span>
+                      <span style={{ fontSize: '9.5px', color: '#d97706', fontWeight: 800, background: '#fffbeb', padding: '2px 6px', borderRadius: '4px', border: '1px solid #fde68a' }}>⚡ Auto-Assigned</span>
                     </div>
                     <input
                       type="text"
-                      placeholder={`e.g. GJ-01-FL-8${nextBadgeSuffix}`}
                       value={driverFormData.vehiclePlate}
                       onChange={(e) => setDriverFormData({ ...driverFormData, vehiclePlate: e.target.value })}
                       style={{
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#fbbf24',
+                        border: '1.5px dashed #fde68a',
+                        background: '#fffbeb',
+                        color: '#b45309',
                         fontWeight: 700,
                         fontSize: '12.5px',
                         outline: 'none',
-                        fontFamily: 'monospace',
+                        fontFamily: 'var(--font-mono, monospace)',
                       }}
                     />
                   </div>
@@ -1966,7 +1982,7 @@ export const AdminDashboardView = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                       Vehicle Type
                     </label>
                     <select
@@ -1976,11 +1992,12 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
                         fontSize: '12.5px',
                         outline: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       <option value="Heavy Compactor (14T)">Heavy Compactor (14T)</option>
@@ -1991,7 +2008,7 @@ export const AdminDashboardView = () => {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                       Assigned Ward / Sector
                     </label>
                     <select
@@ -2001,11 +2018,12 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
                         fontSize: '12.5px',
                         outline: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       <option value="North-West Zone (Sola & Gota)">North-West Zone (Sola & Gota)</option>
@@ -2020,22 +2038,24 @@ export const AdminDashboardView = () => {
 
                 <div
                   style={{
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    background: 'rgba(139, 92, 246, 0.08)',
-                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    background: '#f5f3ff',
+                    border: '1px solid #ddd6fe',
                     fontSize: '11.5px',
-                    color: '#c4b5fd',
+                    color: '#5b21b6',
+                    lineHeight: '1.5',
                   }}
                 >
-                  ℹ️ <strong>Direct Fleet Injection:</strong> The new driver and assigned vehicle will be added to the live fleet database immediately. The driver can immediately log in using their Badge ID or Phone Number.
+                  ℹ️ <strong>Direct Fleet Injection:</strong> The new driver and assigned vehicle will be added to the live fleet database immediately with initial status <strong>Offline</strong>. Once the driver signs in from their cockpit, their live GPS location will immediately broadcast on the map.
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '6px', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
                   <button
                     type="button"
                     onClick={() => setIsDriverRegisterOpen(false)}
                     className="btn btn-secondary btn-sm"
+                    style={{ padding: '8px 16px', fontWeight: 700 }}
                   >
                     Cancel
                   </button>
@@ -2043,7 +2063,7 @@ export const AdminDashboardView = () => {
                     type="submit"
                     onClick={(e) => handleDriverRegisterSubmit(e)}
                     className="btn btn-primary btn-sm"
-                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#ffffff', cursor: 'pointer' }}
+                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)', padding: '8px 18px' }}
                   >
                     Add Driver to Vehicles Database
                   </button>
@@ -2060,48 +2080,56 @@ export const AdminDashboardView = () => {
               position: 'fixed',
               inset: 0,
               zIndex: 99999,
-              background: 'rgba(0, 0, 0, 0.75)',
-              backdropFilter: 'blur(6px)',
+              background: 'rgba(15, 23, 42, 0.65)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               padding: '16px',
+              boxSizing: 'border-box',
             }}
+            onClick={() => setIsOfficerModalOpen(false)}
           >
             <div
-              className="glass-card"
+              className="glass-card animate-scale-in"
               style={{
                 width: '100%',
-                maxWidth: '560px',
-                background: '#0f172a',
-                border: '1px solid #0284c7',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(14, 165, 233, 0.2)',
-                borderRadius: '16px',
+                maxWidth: '600px',
+                background: 'var(--bg-surface, #ffffff)',
+                border: '1px solid var(--border-subtle, #e2e8f0)',
+                boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.22), 0 0 30px rgba(14, 165, 233, 0.08)',
+                borderRadius: 'var(--radius-xl, 20px)',
                 padding: '24px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '1px solid #1e293b', paddingBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div
                     style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
                       background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#ffffff',
+                      boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
+                      flexShrink: 0,
                     }}
                   >
                     <Shield size={20} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.2px' }}>
                       Executive Commissioning Console
                     </h3>
-                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                    <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
                       Appoint Chief Fleet Operations Officer • Office of City Sanitation Commissioner
                     </p>
                   </div>
@@ -2110,9 +2138,21 @@ export const AdminDashboardView = () => {
                 <button
                   type="button"
                   onClick={() => setIsOfficerModalOpen(false)}
-                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: 'var(--bg-surface-elevated, #f1f5f9)',
+                    border: '1px solid var(--border-subtle, #e2e8f0)',
+                    color: 'var(--text-muted, #64748b)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}
+                  title="Close"
                 >
-                  <X size={20} />
+                  <X size={16} />
                 </button>
               </div>
 
@@ -2120,8 +2160,8 @@ export const AdminDashboardView = () => {
               <form onSubmit={handleOfficerCommissionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Officer Full Name <span style={{ color: '#f43f5e' }}>*</span>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+                      Officer Full Name <span style={{ color: 'var(--accent-rose, #e11d48)' }}>*</span>
                     </label>
                     <input
                       type="text"
@@ -2133,18 +2173,18 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        fontSize: '12.5px',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
+                        fontSize: '13px',
                         outline: 'none',
                       }}
                     />
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Official Mobile Phone <span style={{ color: '#f43f5e' }}>*</span>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+                      Official Mobile Phone <span style={{ color: 'var(--accent-rose, #e11d48)' }}>*</span>
                     </label>
                     <input
                       type="tel"
@@ -2156,10 +2196,10 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        fontSize: '12.5px',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
+                        fontSize: '13px',
                         outline: 'none',
                       }}
                     />
@@ -2168,9 +2208,12 @@ export const AdminDashboardView = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Officer Admin ID (Auto)
-                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                        Officer Admin ID
+                      </label>
+                      <span style={{ fontSize: '9.5px', color: '#0284c7', fontWeight: 800, background: '#f0f9ff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bae6fd' }}>⚡ Auto-Assigned</span>
+                    </div>
                     <input
                       type="text"
                       readOnly
@@ -2179,10 +2222,10 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#0b1329',
-                        color: '#38bdf8',
-                        fontFamily: 'monospace',
+                        border: '1.5px dashed #7dd3fc',
+                        background: '#f0f9ff',
+                        color: '#0369a1',
+                        fontFamily: 'var(--font-mono, monospace)',
                         fontWeight: 700,
                         fontSize: '12.5px',
                         outline: 'none',
@@ -2191,9 +2234,12 @@ export const AdminDashboardView = () => {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Official AMC Email (Auto)
-                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                        Official AMC Email
+                      </label>
+                      <span style={{ fontSize: '9.5px', color: '#0284c7', fontWeight: 800, background: '#f0f9ff', padding: '2px 6px', borderRadius: '4px', border: '1px solid #bae6fd' }}>⚡ Generated from Name</span>
+                    </div>
                     <input
                       type="email"
                       readOnly
@@ -2202,11 +2248,12 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#0b1329',
-                        color: '#38bdf8',
+                        border: '1.5px dashed #7dd3fc',
+                        background: '#f0f9ff',
+                        color: '#0369a1',
                         fontSize: '12px',
                         outline: 'none',
+                        fontFamily: 'var(--font-mono, monospace)',
                       }}
                     />
                   </div>
@@ -2214,7 +2261,7 @@ export const AdminDashboardView = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                       Designation
                     </label>
                     <select
@@ -2224,11 +2271,12 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        fontSize: '12px',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
+                        fontSize: '12.5px',
                         outline: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       <option value="Chief Fleet Operations Officer">Chief Fleet Operations Officer</option>
@@ -2240,7 +2288,7 @@ export const AdminDashboardView = () => {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                       Zonal Jurisdiction
                     </label>
                     <select
@@ -2250,11 +2298,12 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        fontSize: '12px',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
+                        fontSize: '12.5px',
                         outline: 'none',
+                        cursor: 'pointer',
                       }}
                     >
                       <option value="North & West Ahmedabad Zones">North & West Ahmedabad Zones</option>
@@ -2267,7 +2316,7 @@ export const AdminDashboardView = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                       Access Key / Password
                     </label>
                     <input
@@ -2278,10 +2327,10 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#1e293b',
-                        color: '#ffffff',
-                        fontFamily: 'monospace',
+                        border: '1.5px solid var(--border-subtle)',
+                        background: 'var(--bg-surface-elevated, #f8fafc)',
+                        color: 'var(--text-primary)',
+                        fontFamily: 'var(--font-mono, monospace)',
                         fontSize: '12.5px',
                         outline: 'none',
                       }}
@@ -2289,7 +2338,7 @@ export const AdminDashboardView = () => {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                       Security Clearance Level
                     </label>
                     <input
@@ -2300,9 +2349,9 @@ export const AdminDashboardView = () => {
                         width: '100%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        border: '1px solid #334155',
-                        background: '#0b1329',
-                        color: '#10b981',
+                        border: '1.5px dashed #a7f3d0',
+                        background: '#ecfdf5',
+                        color: '#047857',
                         fontWeight: 700,
                         fontSize: '11.5px',
                         outline: 'none',
@@ -2313,22 +2362,24 @@ export const AdminDashboardView = () => {
 
                 <div
                   style={{
-                    padding: '10px 14px',
-                    borderRadius: '8px',
-                    background: 'rgba(14, 165, 233, 0.08)',
-                    border: '1px solid rgba(14, 165, 233, 0.2)',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    background: '#f0f9ff',
+                    border: '1px solid #bae6fd',
                     fontSize: '11.5px',
-                    color: '#7dd3fc',
+                    color: '#0369a1',
+                    lineHeight: '1.5',
                   }}
                 >
-                  🏛️ <strong>Executive Commission Mandate:</strong> Appointing this officer provisions their executive credentials into the live Municipal Officers Directory. They can immediately log in as Chief Fleet Operations Officer to register drivers and manage fleet logistics.
+                  🏛️ <strong>Executive Commission Mandate:</strong> Appointing this officer provisions their executive credentials directly into the Supabase <code>admin_credentials</code> database table. They can immediately log in as Chief Fleet Operations Officer to register drivers and command fleet operations.
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '6px', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
                   <button
                     type="button"
                     onClick={() => setIsOfficerModalOpen(false)}
                     className="btn btn-secondary btn-sm"
+                    style={{ padding: '8px 16px', fontWeight: 700 }}
                   >
                     Cancel
                   </button>
@@ -2336,7 +2387,7 @@ export const AdminDashboardView = () => {
                     type="submit"
                     onClick={(e) => handleOfficerCommissionSubmit(e)}
                     className="btn btn-primary btn-sm"
-                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none', color: '#ffffff', cursor: 'pointer' }}
+                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none', color: '#ffffff', cursor: 'pointer', boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)', padding: '8px 18px' }}
                   >
                     Appoint Officer to Leadership Directory
                   </button>
