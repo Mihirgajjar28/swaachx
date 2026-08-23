@@ -31,9 +31,9 @@ export const DriverPersistentDispatchBanner = () => {
     allVehicles: vehicles,
   });
 
-  const { pendingApprovals = [], driverInfo } = driverProfile;
+  const { pendingApprovals = [], driverInfo, isOffline } = driverProfile;
 
-  if (pendingApprovals.length === 0) return null;
+  if (isOffline || pendingApprovals.length === 0) return null;
 
   return (
     <div

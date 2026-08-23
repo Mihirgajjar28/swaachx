@@ -1424,5 +1424,35 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
     expect(cleanResult.cleanlinessScore).toBeGreaterThanOrEqual(80);
     expect(cleanResult.status).toBe('Verified Clean');
   });
+
+  it('57. Driver Offline Isolation: Zero reports assigned when driver shift is completed or offline (even on refresh)', async () => {
+    const { getDriverAssignmentProfile, findNearestDriverForReport } = await import('../lib/driverRouteAssignments');
+    const mockDriver = { email: 'suresh.kumar@ahmedabadsmartcity.gov.in', role: 'Driver', badgeId: 'DRV-801', name: 'Suresh Kumar' };
+
+    // 1. In Active Shift: driver receives assigned reports
+    const activeProfile = getDriverAssignmentProfile({
+      currentUser: mockDriver,
+      shiftStatus: 'Active Shift',
+    });
+    expect(activeProfile.isOffline).toBe(false);
+    expect(activeProfile.assignedReports.length).toBeGreaterThan(0);
+
+    // 2. In Completed Shift / Offline: driver receives ZERO reports & ZERO approval popups
+    const completedProfile = getDriverAssignmentProfile({
+      currentUser: mockDriver,
+      shiftStatus: 'Shift Completed',
+    });
+    expect(completedProfile.isOffline).toBe(true);
+    expect(completedProfile.assignedReports.length).toBe(0);
+    expect(completedProfile.pendingApprovals.length).toBe(0);
+
+    // 3. Automated Proximity Dispatch excludes offline drivers
+    localStorage.setItem('swaachx_driver_shift_state_DRV-801', JSON.stringify({ badgeId: 'DRV-801', shiftStatus: 'Shift Completed' }));
+    const match = findNearestDriverForReport({ lat: 23.0812, lng: 72.5425, location: 'Chandlodiya Market' });
+    expect(match).toBeDefined();
+    // Excluded from DRV-801 since DRV-801 is offline
+    expect(match.badgeId).not.toBe('DRV-801');
+    localStorage.removeItem('swaachx_driver_shift_state_DRV-801');
+  });
 });
 

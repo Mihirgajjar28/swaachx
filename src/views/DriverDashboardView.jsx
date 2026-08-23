@@ -50,19 +50,8 @@ export const DriverDashboardView = () => {
   const [tracingStop, setTracingStop] = useState(null);
   const [verifyingReport, setVerifyingReport] = useState(null);
 
-  // Compute this logged-in driver's specific route, assigned bins, hotspots, and reports
-  const driverProfile = useMemo(() => {
-    return getDriverAssignmentProfile({
-      currentUser,
-      allDustbins: dustbins,
-      allHotspots: hotspots,
-      allReports: reports,
-      allVehicles: vehicles,
-    });
-  }, [currentUser, dustbins, hotspots, reports, vehicles]);
-
-  const { driverInfo, vehicle, assignedRoute, stops, assignedHotspots, assignedReports, pendingApprovals = [], metrics } = driverProfile;
-  const storageKey = `swaachx_driver_shift_state_${driverInfo?.badgeId || 'DRV-801'}`;
+  const badgeId = (currentUser?.badgeId || currentUser?.driverBadge || 'DRV-801').toUpperCase().trim();
+  const storageKey = `swaachx_driver_shift_state_${badgeId}`;
 
   // Restore active shift and serviced stops directly from LocalStorage
   const [shiftStatus, setShiftStatus] = useState(() => {
@@ -98,13 +87,27 @@ export const DriverDashboardView = () => {
     return new Set();
   });
 
+  // Compute this logged-in driver's specific route, assigned bins, hotspots, and reports
+  const driverProfile = useMemo(() => {
+    return getDriverAssignmentProfile({
+      currentUser,
+      allDustbins: dustbins,
+      allHotspots: hotspots,
+      allReports: reports,
+      allVehicles: vehicles,
+      shiftStatus,
+    });
+  }, [currentUser, dustbins, hotspots, reports, vehicles, shiftStatus]);
+
+  const { driverInfo, vehicle, assignedRoute, stops, assignedHotspots, assignedReports, pendingApprovals = [], metrics } = driverProfile;
+
   const [selectedStopId, setSelectedStopId] = useState(null);
 
   // Sync driver shift, stops and resolved reports state to localStorage
   useEffect(() => {
     try {
       const stateObj = {
-        badgeId: driverInfo?.badgeId,
+        badgeId: driverInfo?.badgeId || badgeId,
         vehicleId: vehicle?.id,
         driverName: driverInfo?.name,
         shiftStatus,
@@ -301,13 +304,13 @@ export const DriverDashboardView = () => {
                   className="badge"
                   style={{
                     fontSize: '11px',
-                    background: shiftStatus === 'Active Shift' ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-surface-elevated)',
-                    color: shiftStatus === 'Active Shift' ? 'var(--primary-600)' : 'var(--text-secondary)',
-                    borderColor: shiftStatus === 'Active Shift' ? 'var(--primary-500)' : 'var(--border-subtle)',
-                    fontWeight: 700,
+                    background: shiftStatus === 'Active Shift' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    color: shiftStatus === 'Active Shift' ? 'var(--primary-600)' : '#dc2626',
+                    borderColor: shiftStatus === 'Active Shift' ? 'var(--primary-500)' : 'rgba(239, 68, 68, 0.35)',
+                    fontWeight: 800,
                   }}
                 >
-                  {shiftStatus}
+                  {shiftStatus === 'Active Shift' ? '🟢 Online (Active Shift)' : '🔴 Offline (Shift Completed)'}
                 </span>
                 <span className="badge badge-neutral" style={{ fontSize: '10px' }}>
                   Badge #{driverInfo.badgeId}
@@ -968,12 +971,12 @@ export const DriverDashboardView = () => {
           </div>
 
           <h3 style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
-            {shiftStatus === 'Shift Completed' ? '🎉 Shift Completed' : 'Municipal Waste Collection Standby'}
+            {shiftStatus === 'Shift Completed' ? '🎉 Shift Completed & Driver Offline' : 'Municipal Waste Collection Standby'}
           </h3>
 
           <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '24px', lineHeight: 1.6, maxWidth: '520px', margin: '0 auto 24px' }}>
             {shiftStatus === 'Shift Completed'
-              ? `Shift completed for ${driverInfo.name}! All ${stops.length} smart bins emptied and ${assignedReports.length} citizen tickets resolved. Central dispatch updated.`
+              ? `Shift completed for ${driverInfo.name}! You are currently marked as OFFLINE. All previous sector tasks were cleared and no new resident tickets will be assigned while you are off-duty. Start a new shift whenever you are ready to resume operations.`
               : `Your municipal compactor truck ${vehicle.id} (${vehicle.plateNumber}) is ready in ${driverInfo.assignedWard}. Press 'Start Shift' to unlock turn-by-turn GIS navigation and live waypoint telemetry.`}
           </p>
 
@@ -997,26 +1000,26 @@ export const DriverDashboardView = () => {
               <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{vehicle.plateNumber}</div>
             </div>
             <div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Sector Route</div>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '2px' }}>{assignedRoute.routeName}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Driver Status</div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: shiftStatus === 'Active Shift' ? 'var(--primary-600)' : '#dc2626', marginTop: '2px' }}>
+                {shiftStatus === 'Active Shift' ? '🟢 Online' : '🔴 Offline / Off-Duty'}
+              </div>
               <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{driverInfo.assignedWard}</div>
             </div>
             <div>
               <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Smart Bins</div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: completedCount === stops.length ? 'var(--primary-600)' : 'var(--text-primary)', marginTop: '2px' }}>
-                {completedCount} / {stops.length} Emptied
+              <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--primary-600)', marginTop: '2px' }}>
+                {stops.length} / {stops.length} Cleared ✓
               </div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{pendingCount} remaining</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Route complete</div>
             </div>
             <div>
               <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Sector Reports</div>
-              <div style={{ fontSize: '13px', fontWeight: 800, color: pendingReportsCount === 0 ? 'var(--primary-600)' : 'var(--accent-rose)', marginTop: '2px' }}>
-                {assignedReports.length === 0
-                  ? 'All Cleared ✓'
-                  : `${resolvedReportsCount} / ${assignedReports.length} Resolved`}
+              <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--primary-600)', marginTop: '2px' }}>
+                {shiftStatus === 'Shift Completed' ? '0 Assigned (Offline)' : (assignedReports.length === 0 ? 'All Cleared ✓' : `${resolvedReportsCount} / ${assignedReports.length} Resolved`)}
               </div>
               <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                {assignedReports.length === 0 ? 'Queue clean' : `${pendingReportsCount} pending`}
+                {shiftStatus === 'Shift Completed' ? 'Off-duty • Queue clean' : (assignedReports.length === 0 ? 'Queue clean' : `${pendingReportsCount} pending`)}
               </div>
             </div>
           </div>

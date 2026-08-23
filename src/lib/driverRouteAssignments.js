@@ -343,6 +343,7 @@ export const getDriverAssignmentProfile = ({
   allHotspots = DEFAULT_ML_HOTSPOTS,
   allReports = [],
   allVehicles = DEFAULT_AHMEDABAD_VEHICLES,
+  shiftStatus = null,
 }) => {
   // 1. Identify which driver is logged in
   const email = (currentUser?.email || '').toLowerCase().trim();
@@ -376,6 +377,20 @@ export const getDriverAssignmentProfile = ({
       )) ||
     DEFAULT_AHMEDABAD_VEHICLES.find((v) => v.id === matchedCred.assignedVehicleId) ||
     DEFAULT_AHMEDABAD_VEHICLES[0];
+
+  // Check driver's active shift vs offline status
+  let activeShiftStatus = shiftStatus;
+  if (!activeShiftStatus) {
+    try {
+      const saved = localStorage.getItem(`swaachx_driver_shift_state_${matchedCred.badgeId}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.shiftStatus) activeShiftStatus = parsed.shiftStatus;
+      }
+    } catch (e) {}
+  }
+
+  const isDriverOffline = activeShiftStatus === 'Shift Completed' || activeShiftStatus === 'Offline';
 
   // 3. Resolve Assigned Smart Dustbins
   let assignedBins = (allDustbins || []).filter((bin) => {
@@ -431,105 +446,110 @@ export const getDriverAssignmentProfile = ({
   });
 
   if (assignedHotspots.length === 0 && allHotspots && allHotspots.length > 0) {
-    // Pick based on driver index modulo
     const driverIdx = parseInt(matchedCred.badgeId.replace(/[^0-9]/g, '') || '1', 10) % allHotspots.length;
     assignedHotspots = [allHotspots[driverIdx]];
   }
 
-  // 5. Resolve Assigned Citizen Reports (Reports from past completed shifts are not shown)
-  let pastCompletedIds = new Set();
-  try {
-    const saved = localStorage.getItem('swaachx_completed_shift_reports');
-    if (saved) {
-      pastCompletedIds = new Set(JSON.parse(saved));
-    }
-  } catch (e) {}
+  // 5. Resolve Assigned Citizen Reports & Pending Approvals
+  // If driver is OFFLINE or has COMPLETED SHIFT: No reports or approval requests are assigned!
+  let pendingApprovals = [];
+  let assignedReports = [];
 
-  const sourceReports = (allReports && allReports.length > 0) ? allReports : DEFAULT_AHMEDABAD_SECTOR_REPORTS;
-
-  // 1. Pending Approval Requests specifically offered to this Driver
-  const pendingApprovals = sourceReports
-    .filter((rep) => {
-      if (rep.status === 'Resolved' || rep.status === 'Dispatched') return false;
-      if (rep.status === 'Pending Driver Approval' || (!rep.assignedDriver && rep.status !== 'Resolved' && rep.status !== 'Dispatched')) {
-        const propBadge = (rep.proposedBadge || '').toUpperCase();
-        const propDriver = (rep.proposedDriver || '').toLowerCase();
-        const myBadge = (matchedCred.badgeId || '').toUpperCase();
-        const myName = (matchedCred.name || '').toLowerCase();
-        const myVeh = (matchedVehicle.id || '').toLowerCase();
-
-        if (propBadge && propBadge === myBadge) return true;
-        if (propDriver && (propDriver.includes(myBadge.toLowerCase()) || propDriver.includes(myName) || propDriver.includes(myVeh))) return true;
-
-        // Proximity GIS matching against live fleet coordinates
-        const match = findNearestDriverForReport(
-          {
-            lat: rep.coordinates?.lat || rep.latitude,
-            lng: rep.coordinates?.lng || rep.longitude,
-            ward: rep.ward,
-            location: rep.location,
-          },
-          allVehicles,
-          rep.declinedDrivers || []
-        );
-
-        if (match && match.badgeId && match.badgeId.toUpperCase() === myBadge) {
-          return true;
-        }
-
-        const loc = (rep.location || '').toLowerCase();
-        const ward = (rep.ward || '').toLowerCase();
-        const cat = (rep.category || '').toLowerCase();
-        return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw));
+  if (!isDriverOffline) {
+    let pastCompletedIds = new Set();
+    try {
+      const saved = localStorage.getItem('swaachx_completed_shift_reports');
+      if (saved) {
+        pastCompletedIds = new Set(JSON.parse(saved));
       }
-      return false;
-    })
-    .map((rep) => {
-      if (rep.distanceKm && rep.etaMinutes) return rep;
-      const repLat = rep.coordinates?.lat || rep.latitude;
-      const repLng = rep.coordinates?.lng || rep.longitude;
-      const dKm = calculateDistanceKm(matchedVehicle.coordinates?.lat, matchedVehicle.coordinates?.lng, repLat, repLng);
-      const eta = Math.max(3, Math.round(dKm * 3.5));
-      return {
-        ...rep,
-        distanceKm: dKm,
-        etaMinutes: eta,
-      };
-    });
+    } catch (e) {}
 
-  // 2. Confirmed & Assigned reports for this driver
-  let assignedReports = sourceReports.filter((rep) => {
-    if (pastCompletedIds.has(rep.id)) return false;
-    if (rep.status === 'Pending Driver Approval') return false;
+    const sourceReports = (allReports && allReports.length > 0) ? allReports : DEFAULT_AHMEDABAD_SECTOR_REPORTS;
 
-    const driverRef = (rep.assignedDriver || rep.assigned_driver || '').toLowerCase();
-    if (
-      driverRef &&
-      (driverRef.includes(matchedCred.name.toLowerCase()) ||
-        driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
-        driverRef.includes(matchedVehicle.id.toLowerCase()))
-    ) {
-      return true;
-    }
-    const loc = (rep.location || '').toLowerCase();
-    const ward = (rep.ward || '').toLowerCase();
-    const cat = (rep.category || '').toLowerCase();
-    return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw));
-  });
+    // 1. Pending Approval Requests specifically offered to this Driver
+    pendingApprovals = sourceReports
+      .filter((rep) => {
+        if (rep.status === 'Resolved' || rep.status === 'Dispatched') return false;
+        if (rep.status === 'Pending Driver Approval' || (!rep.assignedDriver && rep.status !== 'Resolved' && rep.status !== 'Dispatched')) {
+          const propBadge = (rep.proposedBadge || '').toUpperCase();
+          const propDriver = (rep.proposedDriver || '').toLowerCase();
+          const myBadge = (matchedCred.badgeId || '').toUpperCase();
+          const myName = (matchedCred.name || '').toLowerCase();
+          const myVeh = (matchedVehicle.id || '').toLowerCase();
 
-  if (assignedReports.length === 0) {
-    assignedReports = DEFAULT_AHMEDABAD_SECTOR_REPORTS.filter((rep) => {
+          if (propBadge && propBadge === myBadge) return true;
+          if (propDriver && (propDriver.includes(myBadge.toLowerCase()) || propDriver.includes(myName) || propDriver.includes(myVeh))) return true;
+
+          // Proximity GIS matching against live fleet coordinates
+          const match = findNearestDriverForReport(
+            {
+              lat: rep.coordinates?.lat || rep.latitude,
+              lng: rep.coordinates?.lng || rep.longitude,
+              ward: rep.ward,
+              location: rep.location,
+            },
+            allVehicles,
+            rep.declinedDrivers || []
+          );
+
+          if (match && match.badgeId && match.badgeId.toUpperCase() === myBadge) {
+            return true;
+          }
+
+          const loc = (rep.location || '').toLowerCase();
+          const ward = (rep.ward || '').toLowerCase();
+          const cat = (rep.category || '').toLowerCase();
+          return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw));
+        }
+        return false;
+      })
+      .map((rep) => {
+        if (rep.distanceKm && rep.etaMinutes) return rep;
+        const repLat = rep.coordinates?.lat || rep.latitude;
+        const repLng = rep.coordinates?.lng || rep.longitude;
+        const dKm = calculateDistanceKm(matchedVehicle.coordinates?.lat, matchedVehicle.coordinates?.lng, repLat, repLng);
+        const eta = Math.max(3, Math.round(dKm * 3.5));
+        return {
+          ...rep,
+          distanceKm: dKm,
+          etaMinutes: eta,
+        };
+      });
+
+    // 2. Confirmed & Assigned reports for this driver
+    assignedReports = sourceReports.filter((rep) => {
       if (pastCompletedIds.has(rep.id)) return false;
+      if (rep.status === 'Pending Driver Approval') return false;
+
+      const driverRef = (rep.assignedDriver || rep.assigned_driver || '').toLowerCase();
+      if (
+        driverRef &&
+        (driverRef.includes(matchedCred.name.toLowerCase()) ||
+          driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
+          driverRef.includes(matchedVehicle.id.toLowerCase()))
+      ) {
+        return true;
+      }
       const loc = (rep.location || '').toLowerCase();
       const ward = (rep.ward || '').toLowerCase();
       const cat = (rep.category || '').toLowerCase();
-      const driverRef = (rep.assignedDriver || '').toLowerCase();
-      return (
-        driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
-        driverRef.includes(matchedVehicle.id.toLowerCase()) ||
-        territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw))
-      );
+      return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw));
     });
+
+    if (assignedReports.length === 0) {
+      assignedReports = DEFAULT_AHMEDABAD_SECTOR_REPORTS.filter((rep) => {
+        if (pastCompletedIds.has(rep.id)) return false;
+        const loc = (rep.location || '').toLowerCase();
+        const ward = (rep.ward || '').toLowerCase();
+        const cat = (rep.category || '').toLowerCase();
+        const driverRef = (rep.assignedDriver || '').toLowerCase();
+        return (
+          driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
+          driverRef.includes(matchedVehicle.id.toLowerCase()) ||
+          territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw))
+        );
+      });
+    }
   }
 
   // 6. Compute Route Metrics
@@ -543,6 +563,8 @@ export const getDriverAssignmentProfile = ({
     driverInfo: matchedCred,
     territoryConfig,
     vehicle: matchedVehicle,
+    isOffline: isDriverOffline,
+    shiftStatus: activeShiftStatus || 'Active Shift',
     assignedRoute: {
       routeName: matchedCred.assignedRoute,
       ward: matchedCred.assignedWard,
@@ -575,13 +597,29 @@ export const getDriverAssignmentProfile = ({
  * AI-powered Proximity Driver Matching:
  * Evaluates report GPS coordinates against active fleet locations
  * and assigns to the closest operating municipal truck within minutes.
+ * Excludes drivers who are offline or have completed their shift.
  */
 export const findNearestDriverForReport = ({ lat, lng, ward = '', location = '' }, vehiclesList = [], excludedBadges = []) => {
   const allCandidates = (vehiclesList && vehiclesList.length > 0) ? vehiclesList : DEFAULT_AHMEDABAD_VEHICLES;
   const excludedSet = new Set((excludedBadges || []).map((b) => String(b).toUpperCase()));
+
+  // Filter ONLY drivers who are NOT offline / NOT completed shift
   const candidates = allCandidates.filter((v) => {
     const badge = (v.driverBadge || v.driver_badge || v.badgeId || `DRV-${(v.id || '').replace(/[^0-9]/g, '')}`).toUpperCase();
-    return !excludedSet.has(badge);
+    if (excludedSet.has(badge)) return false;
+
+    // Check driver's offline / shift status in localStorage
+    try {
+      const saved = localStorage.getItem(`swaachx_driver_shift_state_${badge}`);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && (parsed.shiftStatus === 'Shift Completed' || parsed.shiftStatus === 'Offline')) {
+          return false; // Driver is offline, do NOT dispatch reports to them!
+        }
+      }
+    } catch (e) {}
+
+    return true;
   });
 
   const pool = candidates.length > 0 ? candidates : allCandidates;
