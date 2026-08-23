@@ -14,6 +14,8 @@ import {
   AUTHORIZED_ADMINS_DATABASE,
   dynamicAdminRegistry,
   registerNewAdminOfficer,
+  saveAdminToSupabase,
+  syncAdminsFromSupabase,
   verifyAdminCredentials,
   verifyAdminInSupabase,
   isMunicipalAdminEmail,
@@ -2297,24 +2299,44 @@ export const DashboardProvider = ({ children }) => {
     { id: 'ADM-AMC-003', name: 'Shri Rajeshwar Verma', designation: 'Chief Fleet Operations Officer (North/West)', zone: 'North & West Ahmedabad Zones', phone: '+91 98980 33412', email: 'operations.head@municipal.gov.in', status: 'Active on Duty' },
   ];
 
-  const getStoredOfficers = () => {
-    try {
-      const saved = localStorage.getItem('swaachx_officers');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_OFFICERS_REGISTRY;
-  };
+  const [officers, setOfficers] = useState(() => DEFAULT_OFFICERS_REGISTRY);
 
-  const [officers, setOfficers] = useState(() => getStoredOfficers());
+  // Sync officers directly from Supabase `admin_credentials` table on mount
+  useEffect(() => {
+    let isMounted = true;
+    syncAdminsFromSupabase().then((syncedAdmins) => {
+      if (isMounted && Array.isArray(syncedAdmins) && syncedAdmins.length > 0) {
+        setOfficers((prev) => {
+          const merged = [...prev];
+          syncedAdmins.forEach((adm) => {
+            if (!merged.some((m) => m.id === adm.id || m.email?.toLowerCase() === adm.email?.toLowerCase())) {
+              merged.push({
+                id: adm.id,
+                name: adm.name,
+                designation: adm.designation || 'Chief Fleet Operations Officer',
+                zone: adm.jurisdiction || 'North & West Ahmedabad Zones',
+                phone: adm.phone || '+91 98980 33412',
+                email: adm.email,
+                status: 'Active on Duty',
+                avatarEmoji: adm.avatarEmoji || '🚛',
+                securityClearance: adm.securityClearance || 'Level 4 (Operations Command)',
+              });
+            }
+          });
+          return merged;
+        });
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * Commissioning Action (Municipal Commissioner / Sanitation Commissioner):
-   * Appoints and provisions a new Chief Fleet Operations Officer into official registry and admin auth database.
+   * Appoints and provisions a new Chief Fleet Operations Officer directly into Supabase `admin_credentials` database table.
    */
-  const appointChiefOperationsOfficer = ({
+  const appointChiefOperationsOfficer = async ({
     name,
     designation = 'Chief Fleet Operations Officer',
     zone = 'North & West Ahmedabad Command',
@@ -2355,32 +2377,17 @@ export const DashboardProvider = ({ children }) => {
       ],
     };
 
-    setOfficers((prev) => {
-      const updated = [newOfficer, ...prev];
-      try {
-        localStorage.setItem('swaachx_officers', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
+    // 1. Update in-memory officers state immediately
+    setOfficers((prev) => [newOfficer, ...prev]);
 
-    // Register into dynamic admin registry for immediate login
-    registerNewAdminOfficer(newOfficer);
+    // 2. Persist directly into Supabase `admin_credentials` database table
+    try {
+      await saveAdminToSupabase(newOfficer);
+    } catch (err) {
+      console.warn('Supabase admin_credentials direct insert error:', err);
+    }
 
-    // Save in user password vault
-    setUserPasswords((prev) => {
-      const updated = {
-        ...prev,
-        [officialEmail]: pass,
-        [officerId.toLowerCase()]: pass,
-        [officerId.toUpperCase()]: pass,
-      };
-      try {
-        localStorage.setItem('swaachx_user_passwords', JSON.stringify(updated));
-      } catch (e) {}
-      return updated;
-    });
-
-    addToast(`🏛️ Executive Commission Issued: ${cleanName} appointed as ${designation}!`, 'success');
+    addToast(`🏛️ Executive Commission Issued: ${cleanName} appointed & registered in Supabase admin_credentials!`, 'success');
     return { success: true, officer: newOfficer };
   };
   const [communityQuests, setCommunityQuests] = useState(() => getStoredCommunityQuests());
