@@ -1198,8 +1198,6 @@ export const AdminDashboardView = () => {
                           <span>{zoneTitle}</span>
                         </div>
                         <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                          <span>🏛️ {h.ward || 'AMC Central Zone'}</span>
-                          <span>•</span>
                           <span style={{ fontFamily: 'monospace', color: '#0ea5e9', fontWeight: 700 }}>
                             {lat.toFixed(4)}° N, {lng.toFixed(4)}° E
                           </span>
