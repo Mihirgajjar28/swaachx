@@ -274,23 +274,67 @@ export const AdminLoginModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* Preset Administrator Credentials Helper */}
-          <div
-            style={{
-              padding: '10px 12px',
-              borderRadius: '8px',
-              background: 'rgba(30, 41, 59, 0.6)',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
-              fontSize: '11px',
-              color: '#94a3b8',
-            }}
-          >
-            <div style={{ fontWeight: 700, color: '#cbd5e1', marginBottom: '4px' }}>
-              🔑 Certified Administrator Credentials:
+          {/* 3 Quick-Login Administrator Profiles */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              ⚡ Select Certified Admin Profile (1-Click Fill):
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontFamily: 'monospace', fontSize: '10.5px' }}>
-              <div><strong>Email:</strong> admin@municipal.gov.in</div>
-              <div><strong>Password:</strong> Admin@2026Password</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '6px' }}>
+              {[
+                {
+                  label: 'Commissioner',
+                  icon: '🏛️',
+                  email: 'admin@municipal.gov.in',
+                  pass: 'Admin@2026Password',
+                  badge: 'Level 5 Super Admin',
+                },
+                {
+                  label: 'SWM Director',
+                  icon: '🛡️',
+                  email: 'commissioner@ahmedabad.gov.in',
+                  pass: 'AMC-Admin#2026',
+                  badge: 'Level 4 SWM Head',
+                },
+                {
+                  label: 'Fleet Chief',
+                  icon: '🚛',
+                  email: 'operations.head@municipal.gov.in',
+                  pass: 'FleetAdmin2026!',
+                  badge: 'Level 4 Logistics',
+                },
+              ].map((adm, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setEmail(adm.email);
+                    setPassword(adm.pass);
+                  }}
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: '8px',
+                    background: email === adm.email ? 'rgba(14, 165, 233, 0.2)' : 'rgba(30, 41, 59, 0.7)',
+                    border: email === adm.email ? '1.5px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                    color: '#ffffff',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span>{adm.icon}</span>
+                    <span>{adm.label}</span>
+                  </div>
+                  <span style={{ fontSize: '9.5px', color: email === adm.email ? '#38bdf8' : '#94a3b8', fontWeight: 600 }}>
+                    {adm.badge}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import {
   LayoutDashboard,
@@ -9,11 +9,17 @@ import {
   Trash2,
   Compass,
   Users,
+  Shield,
+  BarChart3,
+  Flame,
+  Activity,
+  Zap,
+  Sliders,
   X,
 } from 'lucide-react';
 
 export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
-  const { activeTab, setActiveTab, activeRole } = useDashboard();
+  const { activeTab, setActiveTab, activeRole, currentUser } = useDashboard();
 
   const citizenNavItems = [
     {
@@ -70,43 +76,39 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     },
   ];
 
-  const adminNavItems = [
-    {
-      id: 'dashboard',
-      label: 'Executive Command',
-      icon: LayoutDashboard,
-      badge: null,
-      description: 'City Overview & KPIs',
-    },
-    {
-      id: 'gis-map',
-      label: 'Live GIS Grid',
-      icon: Compass,
-      badge: null,
-      description: 'Master Map Telemetry',
-    },
-    {
-      id: 'incidents',
-      label: 'Incident Hub',
-      icon: ClipboardList,
-      badge: null,
-      description: 'Override Dispatch',
-    },
-    {
-      id: 'vehicles',
-      label: 'Fleet & Drivers',
-      icon: Truck,
-      badge: null,
-      description: '10 Trucks & Telemetry',
-    },
-    {
-      id: 'dustbins',
-      label: 'Smart IoT Dustbins',
-      icon: Trash2,
-      badge: null,
-      description: 'Sensors & Fill Levels',
-    },
-  ];
+  const adminId = currentUser?.id || 'ADM-AMC-001';
+  const isSuperAdmin = adminId === 'ADM-AMC-001';
+  const isSanitationDirector = adminId === 'ADM-AMC-002';
+  const isOperationsChief = adminId === 'ADM-AMC-003';
+
+  const adminNavItems = useMemo(() => {
+    if (isSuperAdmin) {
+      return [
+        { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard, badge: 'Level 5', description: 'City Sanitation KPIs' },
+        { id: 'ward-rankings', label: 'Ward Rankings', icon: BarChart3, badge: '48 Wards', description: 'Cleanliness League' },
+        { id: 'directives', label: 'Directives & Protocols', icon: Zap, badge: 'Directives', description: 'Emergency Mandates' },
+        { id: 'audit-logs', label: 'SBM Compliance Audit', icon: Activity, badge: 'Audits', description: 'Export Certificates' },
+        { id: 'officers', label: 'Officer Registry', icon: Shield, badge: 'Clearance', description: 'Role Provisioning' },
+      ];
+    }
+    if (isSanitationDirector) {
+      return [
+        { id: 'dashboard', label: 'Sanitation Directorate', icon: LayoutDashboard, badge: 'Level 4', description: 'Department Overview' },
+        { id: 'incidents', label: 'Incident & Grievances', icon: ClipboardList, badge: 'Tickets', description: 'Dispute Arbitration & Fines' },
+        { id: 'hotspots', label: 'AI Predictive Hotspots', icon: Flame, badge: 'AI ML', description: 'Surveillance Cameras' },
+        { id: 'quests-approval', label: 'Community Quests', icon: Users, badge: 'Civic', description: 'Grants & Certification' },
+        { id: 'mrf', label: 'MRF & Diversion', icon: Recycle, badge: 'MRF', description: 'Waste Treatment Yield' },
+      ];
+    }
+    // Operations Chief (ADM-AMC-003)
+    return [
+      { id: 'dashboard', label: 'Fleet Operations', icon: LayoutDashboard, badge: 'North/West', description: 'Logistics Command' },
+      { id: 'gis-map', label: 'Live Fleet GIS Grid', icon: Compass, badge: 'Live GPS', description: '10 Trucks Telemetry' },
+      { id: 'vehicles', label: 'Trucks & Diagnostics', icon: Truck, badge: '10 Trucks', description: 'Payload & Fuel Health' },
+      { id: 'dustbins', label: 'Smart IoT Bins', icon: Trash2, badge: 'Sensors', description: 'Calibration & Battery' },
+      { id: 'dispatch-overrides', label: 'Dispatch Overrides', icon: Zap, badge: 'Override', description: 'Emergency Rerouting' },
+    ];
+  }, [isSuperAdmin, isSanitationDirector, isOperationsChief]);
 
   const navItems =
     activeRole === 'admin'
