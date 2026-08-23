@@ -107,25 +107,25 @@ export const ReportsView = () => {
   const handleSelectPresetSample = async (sample) => {
     setPhotoName(sample.name);
     setPhotoPreview(sample.previewUrl);
-    setPhotoFile(sample.tag);
+    setPhotoFile(sample.previewUrl);
     setWasteValidation(null);
 
     setIsScanningPhoto(true);
     try {
       const res = await verifyReportWastePhoto({
         imageFile: sample.previewUrl,
-        textHint: sample.tag,
+        textHint: `${sample.name} ${sample.tag}`,
       });
       setWasteValidation(res);
       if (!res.isValid) {
-        addToast('⚠️ Invalid Photo: Gemini verified this is not a legitimate waste item.', 'error');
+        addToast('⚠️ Invalid Photo: Photo not recognized as legitimate physical waste.', 'error');
       } else {
         if (res.category) {
           if (res.category.includes('Organic')) setCategory('Overflowing Bin');
           else if (res.category.includes('Hazardous') || res.category.includes('Electronic')) setCategory('Hazardous Waste');
           else setCategory('Illegal Dumping');
         }
-        addToast(`✅ Gemini Verified Waste: ${res.wasteType}`, 'success');
+        addToast(`✅ Verified Waste: ${res.wasteType}`, 'success');
       }
     } catch (err) {
       console.warn('Waste verification error:', err);
@@ -135,14 +135,14 @@ export const ReportsView = () => {
   };
 
   const handleAnalyzeReportPhoto = async () => {
-    if (!photoFile && !photoName && !description) {
+    if (!photoFile && !photoName && !photoPreview && !description) {
       addToast('Please attach a photo or specify waste description first.', 'warning');
       return;
     }
     setIsScanningPhoto(true);
     try {
       const res = await verifyReportWastePhoto({
-        imageFile: photoFile || photoPreview,
+        imageFile: photoPreview || photoFile,
         textHint: photoName || description || 'waste anomaly',
       });
       setWasteValidation(res);
@@ -154,15 +154,15 @@ export const ReportsView = () => {
         }
         setDescription((prev) =>
           prev
-            ? `${prev}\n\n[AI Gemini Verified]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}`
-            : `[AI Gemini Verified]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}`
+            ? `${prev}\n\n[Verified]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}`
+            : `[Verified]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}`
         );
-        addToast(`AI Classified: ${res.wasteType} (${res.binColor})`, 'success');
+        addToast(`Classified: ${res.wasteType} (${res.binColor})`, 'success');
       } else {
-        addToast('⚠️ Gemini: Not legitimate physical waste.', 'error');
+        addToast('⚠️ Not legitimate physical waste.', 'error');
       }
     } catch (e) {
-      addToast('AI analysis complete.', 'info');
+      addToast('Analysis complete.', 'info');
     } finally {
       setIsScanningPhoto(false);
     }

@@ -10,15 +10,11 @@ export const DEFAULT_GEMINI_API_KEY =
 
 // Common non-waste keywords (screenshots, UI captures, portraits, pets, general non-waste)
 const NON_WASTE_KEYWORDS = [
-  'screenshot', 'screen_shot', 'screen shot', 'capture', 'snip', 'desktop',
-  'ui', 'dashboard', 'ticket', 'table', 'chart', 'diagram', 'icon', 'logo', 'button', 'window', 'app', 'website',
-  'person', 'human', 'selfie', 'face', 'portrait', 'people', 'man', 'woman', 'child', 'baby', 'profile', 'avatar',
-  'dog', 'cat', 'puppy', 'kitten', 'bird_alive', 'fish_alive',
-  'car', 'automobile', 'vehicle_clean', 'bike', 'motorcycle', 'scooter',
-  'sky', 'sunset', 'cloud', 'mountain', 'landscape', 'beach', 'tree_living', 'flower_garden',
-  'living_room', 'bedroom', 'furniture', 'bed', 'sofa', 'table_clean', 'chair_clean',
-  'passport', 'id_card', 'currency', 'money', 'cash', 'credit_card', 'receipt', 'invoice',
-  'not_waste', 'not waste', 'non_waste', 'non waste'
+  'screenshot', 'screen_shot', 'screen shot', 'capture_screen', 'desktop_screen',
+  'dashboard_ui', 'table_ticket', 'user_interface', 'website_app', 'webpage_capture',
+  'selfie', 'portrait', 'person_photo', 'living_animal', 'pet_dog', 'pet_cat',
+  'passport', 'id_card', 'currency_money', 'cash_note', 'credit_card',
+  'not_waste', 'not waste', 'non_waste', 'non waste', 'fake_report'
 ];
 
 // Circular economy knowledge base for verified municipal waste categories
