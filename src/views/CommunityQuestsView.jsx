@@ -291,20 +291,6 @@ export const CommunityQuestsView = () => {
                       <span>{quest.categoryIcon || '🌿'}</span>
                       <span>{quest.category}</span>
                     </span>
-
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        fontFamily: 'var(--font-mono)',
-                        color: '#0284c7',
-                        background: 'rgba(2, 132, 199, 0.1)',
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                      }}
-                    >
-                      +{quest.karmaReward || 50} Karma
-                    </span>
                   </div>
 
                   {/* Title */}
