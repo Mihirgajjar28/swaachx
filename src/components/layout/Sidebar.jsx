@@ -250,28 +250,6 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           })}
         </nav>
       </div>
-
-      {/* Live Telemetry & Status Footer */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid var(--border-subtle)',
-          background: 'var(--bg-surface-elevated)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="radar-dot" style={{ width: '7px', height: '7px' }} />
-          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>
-            {activeRole === 'driver' ? 'Field Telemetry Active' : 'Citizen Grid Online'}
-          </span>
-        </div>
-        <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-          v2.0
-        </span>
-      </div>
     </aside>
   );
 };
