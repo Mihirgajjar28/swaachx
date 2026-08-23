@@ -43,7 +43,6 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [isClaimedKarma, setIsClaimedKarma] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -54,7 +53,6 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
     setSelectedImage(file);
     setTextHint(file.name || '');
     setAnalysisResult(null);
-    setIsClaimedKarma(false);
 
     try {
       const converted = await fileToBase64(file);
@@ -69,7 +67,6 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
     setImagePreview(preset.previewUrl);
     setTextHint(preset.tag);
     setAnalysisResult(null);
-    setIsClaimedKarma(false);
     addToast(`Loaded preset sample: ${preset.name}`, 'info');
   };
 
@@ -81,7 +78,6 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
 
     setIsAnalyzing(true);
     setAnalysisResult(null);
-    setIsClaimedKarma(false);
 
     try {
       const result = await analyzeWasteWithGemini({
@@ -106,13 +102,6 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
       localStorage.setItem('swaachx_custom_gemini_key', key);
       addToast('Gemini API key saved securely for this browser session.', 'success');
     } catch (e) {}
-  };
-
-  const handleClaimKarma = () => {
-    if (isClaimedKarma) return;
-    setIsClaimedKarma(true);
-    const pts = analysisResult?.karmaPoints || 25;
-    addToast(`🌟 +${pts} Eco Karma Points added to your profile for responsible waste segregation!`, 'success');
   };
 
   const handleRouteToBin = () => {
@@ -655,20 +644,6 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
                     {analysisResult.compostable ? 'Compostable 🍂' : analysisResult.recyclable ? '100% Recyclable ♻️' : 'Hazardous Drop ⚡'}
                   </div>
                 </div>
-
-                <div
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: 'var(--radius-md)',
-                    background: 'rgba(217, 119, 6, 0.06)',
-                    border: '1px solid rgba(217, 119, 6, 0.18)',
-                  }}
-                >
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Citizen Karma</div>
-                  <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--accent-amber)' }}>
-                    +{analysisResult.karmaPoints || 25} Points
-                  </div>
-                </div>
               </div>
 
               {/* Environmental Impact Note */}
@@ -688,51 +663,31 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
                 </div>
               )}
 
-              {/* Action Buttons: Claim Karma, Find Bin, Create Report */}
+              {/* Action Buttons: Find Bin, Create Report */}
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={handleClaimKarma}
-                  disabled={isClaimedKarma}
+                  onClick={handleRouteToBin}
                   style={{
                     flex: 1,
-                    minWidth: '160px',
-                    padding: '9px 12px',
+                    minWidth: '150px',
+                    padding: '9px 14px',
                     borderRadius: 'var(--radius-md)',
-                    background: isClaimedKarma ? 'var(--bg-surface-elevated)' : 'var(--primary-500)',
-                    color: isClaimedKarma ? 'var(--text-muted)' : '#ffffff',
+                    background: 'var(--primary-500)',
+                    border: 'none',
+                    color: '#ffffff',
                     fontWeight: 700,
                     fontSize: '12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '6px',
-                    border: 'none',
-                    cursor: isClaimedKarma ? 'default' : 'pointer',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 8px var(--primary-glow)',
                   }}
                 >
-                  <Award size={14} />
-                  <span>{isClaimedKarma ? 'Karma Points Claimed ✓' : `Claim +${analysisResult.karmaPoints || 25} Karma`}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleRouteToBin}
-                  style={{
-                    padding: '9px 12px',
-                    borderRadius: 'var(--radius-md)',
-                    background: 'var(--bg-surface-elevated)',
-                    border: '1px solid var(--border-medium)',
-                    color: 'var(--text-primary)',
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}
-                >
-                  <MapPin size={14} color="var(--primary-600)" />
-                  <span>Locate Bin</span>
+                  <MapPin size={14} color="#ffffff" />
+                  <span>Locate Designated Smart Bin</span>
                 </button>
 
                 <button
