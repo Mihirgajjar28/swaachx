@@ -264,6 +264,10 @@ export const AdminDashboardView = () => {
   };
 
   const openOfficerCommissionModal = () => {
+    if (!isSanitationDirector) {
+      addToast('Executive Action Restricted: Officer appointments are commissioned exclusively by the Office of City Sanitation Commissioner (ADM-AMC-002). Municipal Commissioner holds directory oversight.', 'warning');
+      return;
+    }
     const freshIdx = (officers || []).length + 1;
     const freshId = `ADM-AMC-00${freshIdx > 9 ? freshIdx : freshIdx}`;
     setOfficerFormData({
@@ -281,6 +285,10 @@ export const AdminDashboardView = () => {
 
   const handleOfficerCommissionSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
+    if (!isSanitationDirector) {
+      addToast('Executive Action Restricted: Commissioning is permitted exclusively to the Office of City Sanitation Commissioner.', 'error');
+      return;
+    }
     const cleanName = (officerFormData.officerName || '').trim();
     if (!cleanName) {
       addToast('Please enter the officer full name.', 'error');
@@ -825,11 +833,15 @@ export const AdminDashboardView = () => {
                   <Shield size={18} style={{ color: '#0ea5e9' }} />
                   Municipal Executive Officers & Chief Fleet Operations Directory
                 </h3>
-                <p className="card-subtitle">Certified AMC Solid Waste Management leadership directory, executive commissioning, and security clearance levels</p>
+                <p className="card-subtitle">
+                  {isSuperAdmin
+                    ? 'Official AMC Solid Waste Management leadership directory and security clearance levels (Executive Oversight)'
+                    : 'Certified AMC Solid Waste Management leadership directory, executive commissioning, and security clearance levels'}
+                </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span className="badge badge-active">{officers.length} Executive Officers</span>
-                {(isSuperAdmin || isSanitationDirector) && (
+                {isSanitationDirector && (
                   <button
                     type="button"
                     onClick={openOfficerCommissionModal}
@@ -850,6 +862,24 @@ export const AdminDashboardView = () => {
                     <UserPlus size={14} />
                     <span>Appoint Chief Fleet Operations Officer</span>
                   </button>
+                )}
+                {isSuperAdmin && (
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: 'var(--text-muted)',
+                      background: 'var(--bg-surface-elevated)',
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-subtle)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                    }}
+                  >
+                    🏛️ Commissioner Executive Oversight (Read-Only)
+                  </span>
                 )}
               </div>
             </div>

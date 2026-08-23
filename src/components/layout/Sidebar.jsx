@@ -89,7 +89,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         { id: 'ward-rankings', label: 'Ward Rankings', icon: BarChart3, badge: null, description: 'Cleanliness League' },
         { id: 'directives', label: 'Directives & Protocols', icon: Zap, badge: null, description: 'Emergency Mandates' },
         { id: 'audit-logs', label: 'SBM Compliance Audit', icon: Activity, badge: null, description: 'Export Certificates' },
-        { id: 'officers', label: 'Officer Registry', icon: Shield, badge: null, description: 'Role Provisioning' },
+        { id: 'officers', label: 'Officer Registry', icon: Shield, badge: null, description: 'Executive Directory' },
       ];
     }
     if (isSanitationDirector) {
