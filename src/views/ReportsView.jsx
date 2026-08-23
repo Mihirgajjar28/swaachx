@@ -575,12 +575,12 @@ export const ReportsView = () => {
                     {wasteValidation.isValid ? (
                       <>
                         <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-                        <span>✅ Gemini AI Verified: Legitimate waste detected ({wasteValidation.wasteType}). Ready for submission.</span>
+                        <span>✅ Verified: Legitimate waste detected ({wasteValidation.wasteType}). Ready for submission.</span>
                       </>
                     ) : (
                       <>
                         <AlertTriangle size={16} style={{ flexShrink: 0 }} />
-                        <span>❌ Gemini AI Rejected: Non-waste photo detected ({wasteValidation.reason || 'Screenshot / Non-waste'}). Please attach physical waste.</span>
+                        <span>❌ Rejected: Non-waste photo detected ({wasteValidation.reason || 'Screenshot / Non-waste'}). Please attach physical waste.</span>
                       </>
                     )}
                   </div>
