@@ -2155,6 +2155,7 @@ export const DashboardProvider = ({ children }) => {
       try {
         localStorage.setItem('swaachx_vehicles', JSON.stringify(updated));
       } catch (e) {}
+      updateDriverRegistryFromVehicles(updated);
       return updated;
     });
 

@@ -186,23 +186,34 @@ export const AdminDashboardView = () => {
   };
 
   const handleDriverRegisterSubmit = (e) => {
-    e.preventDefault();
-    if (!driverFormData.driverName.trim()) {
+    if (e && e.preventDefault) e.preventDefault();
+    const cleanName = (driverFormData.driverName || '').trim();
+    if (!cleanName) {
       addToast('Please enter the driver full name.', 'error');
       return;
     }
+    const nextIdx = vehicles.length + 1;
+    const suffix = nextIdx < 10 ? '0' + nextIdx : nextIdx;
+    const badge = (driverFormData.driverBadge || `DRV-8${suffix}`).trim();
+    const nameParts = cleanName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const nameSlug = nameParts.length >= 2 ? `${nameParts[0]}.${nameParts[nameParts.length - 1]}` : (nameParts[0] || 'driver');
+    const email = (driverFormData.driverEmail || `${nameSlug}.${suffix}@wastefleet.org`).trim();
+    const pin = (driverFormData.driverPin || `FLT-8${suffix}-AUTH`).trim();
+    const plate = (driverFormData.vehiclePlate || `GJ-01-FL-8${suffix}`).trim();
+    const phone = (driverFormData.driverPhone || `+91 9825${Math.floor(100000 + Math.random() * 900000)}`).trim();
+
     const result = registerNewDriverVehicle({
-      driverName: driverFormData.driverName,
-      driverPhone: driverFormData.driverPhone,
-      driverBadge: driverFormData.driverBadge,
-      driverEmail: driverFormData.driverEmail,
-      driverPin: driverFormData.driverPin,
-      vehiclePlate: driverFormData.vehiclePlate,
-      vehicleType: driverFormData.vehicleType,
-      assignedRoute: driverFormData.assignedRoute,
-      wardSector: driverFormData.wardSector,
-      initialFuel: driverFormData.initialFuel,
-      initialLoad: driverFormData.initialLoad,
+      driverName: cleanName,
+      driverPhone: phone,
+      driverBadge: badge,
+      driverEmail: email,
+      driverPin: pin,
+      vehiclePlate: plate,
+      vehicleType: driverFormData.vehicleType || 'Heavy Compactor (14T)',
+      assignedRoute: driverFormData.assignedRoute || `Route N${nextIdx} - North-West SG Highway & Sola Corridor`,
+      wardSector: driverFormData.wardSector || 'North-West Zone (Sola & Gota)',
+      initialFuel: driverFormData.initialFuel || 95,
+      initialLoad: driverFormData.initialLoad || 10,
     });
 
     if (result?.success) {
@@ -586,7 +597,7 @@ export const AdminDashboardView = () => {
         )}
 
         {/* 3. WARD RANKINGS LEAGUE TABLE (Commissioner Exclusive) */}
-        {adminTab === 'ward-rankings' && (
+        {(adminTab === 'ward-rankings' || (adminTab === 'overview' && isSuperAdmin)) && (
           <div className="glass-card">
             <div className="card-header">
               <div>
@@ -871,7 +882,7 @@ export const AdminDashboardView = () => {
         )}
 
         {/* 7. MRF & LANDFILL DIVERSION ANALYTICS (Sanitation Director Exclusive) */}
-        {adminTab === 'mrf' && (
+        {(adminTab === 'mrf' || (adminTab === 'overview' && isSanitationDirector)) && (
           <div className="glass-card">
             <div className="card-header">
               <div>
@@ -1182,7 +1193,7 @@ export const AdminDashboardView = () => {
         )}
 
         {/* 11. MUNICIPAL FLEET & TRUCKS DIAGNOSTICS (Fleet Chief) */}
-        {adminTab === 'fleet' && (
+        {(adminTab === 'fleet' || (adminTab === 'overview' && isOperationsChief)) && (
           <div className="glass-card">
             <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
               <div>
@@ -1918,8 +1929,9 @@ export const AdminDashboardView = () => {
                   </button>
                   <button
                     type="submit"
+                    onClick={(e) => handleDriverRegisterSubmit(e)}
                     className="btn btn-primary btn-sm"
-                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#ffffff' }}
+                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#ffffff', cursor: 'pointer' }}
                   >
                     Add Driver to Vehicles Database
                   </button>
