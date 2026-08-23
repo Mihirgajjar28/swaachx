@@ -96,7 +96,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       return [
         { id: 'dashboard', label: 'Sanitation Directorate', icon: LayoutDashboard, badge: 'Level 4', description: 'Department Overview' },
         { id: 'incidents', label: 'Incident & Grievances', icon: ClipboardList, badge: 'Tickets', description: 'Dispute Arbitration & Fines' },
-        { id: 'hotspots', label: 'AI Predictive Hotspots', icon: Flame, badge: 'AI ML', description: 'Surveillance Cameras' },
+        { id: 'hotspots', label: 'Predictive Hotspots', icon: Flame, badge: 'Hotspots', description: 'Surveillance & Surge Patrols' },
         { id: 'quests-approval', label: 'Community Quests', icon: Users, badge: 'Civic', description: 'Grants & Certification' },
         { id: 'mrf', label: 'MRF & Diversion', icon: Recycle, badge: 'MRF', description: 'Waste Treatment Yield' },
         { id: 'audit-logs', label: 'Directorate Audits', icon: Activity, badge: 'Logs', description: 'SWM Action Logs' },

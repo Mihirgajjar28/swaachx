@@ -345,11 +345,11 @@ export const AdminDashboardView = () => {
 
                   <div className="glass-card" style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>AI Predictive Surge Hotspots</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Predictive Waste Hotspots</span>
                       <Flame size={16} color="#f43f5e" />
                     </div>
                     <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#f43f5e' }}>{hotspots.length} Zones</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>CCTV ML Surveillance Active</div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>High-Density Surge Surveillance</div>
                   </div>
 
                   <div className="glass-card" style={{ padding: '16px' }}>
@@ -1134,60 +1134,132 @@ export const AdminDashboardView = () => {
           </div>
         )}
 
-        {/* 13. AI PREDICTIVE HOTSPOTS & SURVEILLANCE */}
+        {/* 13. PREDICTIVE HOTSPOTS & SURVEILLANCE */}
         {adminTab === 'hotspots' && (
           <div className="glass-card">
             <div className="card-header">
               <div>
                 <h3 className="card-title">
                   <Flame size={18} style={{ color: '#f43f5e' }} />
-                  AI Machine Learning Waste Surge Hotspots & CCTV Patrols
+                  Predictive Waste Hotspots & Surveillance Patrols
                 </h3>
-                <p className="card-subtitle">Predictive models forecast waste overflow 6 hours in advance using historical citizen footfall and market traffic</p>
+                <p className="card-subtitle">
+                  Forecasts waste accumulation surges 6 hours in advance based on historical citizen footfall, market density, and transit patterns
+                </p>
               </div>
-              <span className="badge badge-active">{hotspots.length} Surge Zones</span>
+              <span className="badge badge-active">{hotspots.length} Predictive Hotspots</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', padding: '18px 20px' }}>
-              {hotspots.map((h) => (
-                <div
-                  key={h.id}
-                  style={{
-                    padding: '16px',
-                    borderRadius: 'var(--radius-lg)',
-                    background: 'var(--bg-surface-elevated)',
-                    border: '1px solid var(--border-subtle)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    gap: '10px',
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)' }}>{h.location}</span>
-                      <span className="badge badge-active" style={{ fontSize: '10px', fontFamily: 'monospace' }}>{h.id}</span>
-                    </div>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 6px 0' }}>
-                      📍 {h.ward} • Risk Score: <strong>{h.riskScore || 'High (91%)'}</strong>
-                    </p>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                      📊 Predicted Surge Volume: <strong style={{ color: '#f43f5e' }}>{h.predictedVolume || '3.2 Tons'}</strong>
-                    </div>
-                  </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '14px', padding: '18px 20px' }}>
+              {hotspots.map((h) => {
+                const zoneTitle = h.zoneName || h.location || 'Municipal Hotspot Corridor';
+                const zoneId = h.zoneId || h.id || 'HOTSPOT-AMD';
+                const lat = h.coordinates?.lat || 23.0248;
+                const lng = h.coordinates?.lng || 72.5898;
+                const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
-                    <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 700 }}>● CCTV ML Surveillance Active</span>
-                    <button
-                      onClick={() => addToast(`⚡ Preventive compactor pre-positioned at ${h.location}!`, 'success')}
-                      className="btn btn-primary btn-sm"
-                      style={{ fontSize: '11px', padding: '3px 8px' }}
-                    >
-                      Pre-Position Compactor
-                    </button>
+                return (
+                  <div
+                    key={zoneId}
+                    style={{
+                      padding: '18px',
+                      borderRadius: 'var(--radius-lg)',
+                      background: 'var(--bg-surface-elevated)',
+                      border: '1px solid var(--border-subtle)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                    }}
+                  >
+                    <div>
+                      {/* Header */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)' }}>{zoneTitle}</span>
+                        <span className="badge badge-active" style={{ fontSize: '10px', fontFamily: 'monospace' }}>{zoneId}</span>
+                      </div>
+
+                      {/* Location & GPS Info */}
+                      <div
+                        style={{
+                          padding: '10px 12px',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'rgba(14, 165, 233, 0.06)',
+                          border: '1px solid rgba(14, 165, 233, 0.18)',
+                          marginBottom: '10px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px',
+                          fontSize: '11.5px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)', fontWeight: 700 }}>
+                          <MapPin size={13} color="#0ea5e9" />
+                          <span>{zoneTitle}</span>
+                        </div>
+                        <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span>🏛️ {h.ward || 'AMC Central Zone'}</span>
+                          <span>•</span>
+                          <span style={{ fontFamily: 'monospace', color: '#0ea5e9', fontWeight: 700 }}>
+                            {lat.toFixed(4)}° N, {lng.toFixed(4)}° E
+                          </span>
+                          <span>•</span>
+                          <span>Perimeter: {h.radiusMeters || 400}m</span>
+                        </div>
+                      </div>
+
+                      {/* Surge Metrics */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Risk Assessment:</span>
+                          <span className="badge" style={{ background: 'rgba(244, 63, 94, 0.15)', color: '#f43f5e', fontWeight: 800, fontSize: '10px' }}>
+                            {h.riskLevel || 'High'} ({h.confidenceScore ? `${h.confidenceScore}% Confidence` : (h.riskScore || '92%')})
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>Predicted Surge Volume:</span>
+                          <strong style={{ color: '#f43f5e', fontFamily: 'monospace' }}>{h.predictedVolume || '3.5 Tons'}</strong>
+                        </div>
+
+                        {h.primaryAnomaly && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', lineHeight: 1.35 }}>
+                            ⚠️ <strong>Trigger Anomaly:</strong> {h.primaryAnomaly}
+                          </div>
+                        )}
+
+                        {h.suggestedAction && (
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', lineHeight: 1.35 }}>
+                            🎯 <strong>Recommended Action:</strong> {h.suggestedAction}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '10px', gap: '8px' }}>
+                      <a
+                        href={mapsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '11px', padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none' }}
+                      >
+                        <ExternalLink size={12} />
+                        <span>View GIS Map</span>
+                      </a>
+
+                      <button
+                        onClick={() => addToast(`⚡ Preventive compactor pre-positioned at ${zoneTitle}!`, 'success')}
+                        className="btn btn-primary btn-sm"
+                        style={{ fontSize: '11px', padding: '4px 10px', fontWeight: 700 }}
+                      >
+                        Pre-Position Compactor
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
