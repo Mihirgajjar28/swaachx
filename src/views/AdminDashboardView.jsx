@@ -507,7 +507,7 @@ export const AdminDashboardView = () => {
                     <th style={{ padding: '10px 14px', fontWeight: 800 }}>Ward Sector</th>
                     <th style={{ padding: '10px 14px', fontWeight: 800 }}>Cleanliness Score</th>
                     <th style={{ padding: '10px 14px', fontWeight: 800 }}>SLA Resolution</th>
-                    <th style={{ padding: '10px 14px', fontWeight: 800 }}>Active IoT Bins</th>
+                    <th style={{ padding: '10px 14px', fontWeight: 800 }}>Active Smart Bins</th>
                     <th style={{ padding: '10px 14px', fontWeight: 800 }}>Grade</th>
                     <th style={{ padding: '10px 14px', fontWeight: 800, textAlign: 'right' }}>Status</th>
                   </tr>
@@ -1147,14 +1147,14 @@ export const AdminDashboardView = () => {
           </div>
         )}
 
-        {/* 12. SMART IOT DUSTBINS & SENSORS CALIBRATION */}
+        {/* 12. SMART BINS & SENSORS CALIBRATION */}
         {adminTab === 'dustbins' && (
           <div className="glass-card">
             <div className="card-header">
               <div>
                 <h3 className="card-title">
                   <Trash2 size={18} style={{ color: '#10b981' }} />
-                  Smart IoT Dustbins & Ultrasonic Sensor Calibration
+                  Smart Bins & Ultrasonic Sensor Calibration
                 </h3>
                 <p className="card-subtitle">Live ultrasonic fill levels, optical sensor health, and remote hardware calibration offset</p>
               </div>

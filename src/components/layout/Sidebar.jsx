@@ -107,7 +107,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       { id: 'dashboard', label: 'Fleet Operations', icon: LayoutDashboard, badge: null, description: 'Logistics Command' },
       { id: 'gis-map', label: 'Live Fleet GIS Grid', icon: Compass, badge: null, description: '10 Trucks Telemetry' },
       { id: 'vehicles', label: 'Trucks & Diagnostics', icon: Truck, badge: null, description: 'Payload & Fuel Health' },
-      { id: 'dustbins', label: 'Smart IoT Bins', icon: Trash2, badge: null, description: 'Sensors & Calibration' },
+      { id: 'dustbins', label: 'Smart Bins', icon: Trash2, badge: null, description: 'Sensors & Calibration' },
       { id: 'dispatch-overrides', label: 'Dispatch Overrides', icon: Zap, badge: null, description: 'Emergency Rerouting' },
       { id: 'audit-logs', label: 'Fleet Logs', icon: Activity, badge: null, description: 'Depot Dispatch Records' },
     ];
