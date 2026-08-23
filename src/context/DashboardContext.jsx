@@ -2101,6 +2101,80 @@ export const DashboardProvider = ({ children }) => {
     addToast(`🗑️ Smart Bin #${binId} emptied & sensor reset to 0%!`, 'success');
   };
 
+  /**
+   * Chief Fleet Operations Officer (ADM-AMC-003) Action:
+   * Dynamically provisions and registers a new municipal driver and vehicle directly into the live fleet database.
+   */
+  const registerNewDriverVehicle = ({
+    driverName,
+    driverPhone,
+    driverBadge,
+    driverEmail,
+    driverPin,
+    vehiclePlate,
+    vehicleType,
+    assignedRoute,
+    wardSector,
+    initialFuel = 95,
+    initialLoad = 0,
+    coordinates = { lat: 23.0784, lng: 72.5441 },
+  }) => {
+    const nextIndex = vehicles.length + 1;
+    const vehicleId = `TRK-AMD-8${nextIndex < 10 ? '0' + nextIndex : nextIndex}`;
+    const badge = (driverBadge || `DRV-8${nextIndex < 10 ? '0' + nextIndex : nextIndex}`).toUpperCase().trim();
+    const cleanName = (driverName || 'Municipal Driver').trim();
+    const email = (driverEmail || `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@wastefleet.org`).toLowerCase().trim();
+    const plate = (vehiclePlate || `GJ-01-FL-${1000 + nextIndex}`).toUpperCase().trim();
+    const pin = (driverPin || `FLT-${badge}-AUTH`).trim();
+    const cleanPhone = (driverPhone || `+91 9825${Math.floor(100000 + Math.random() * 900000)}`).trim();
+
+    const newVehicle = {
+      id: vehicleId,
+      plateNumber: plate,
+      driverName: cleanName,
+      driverPhone: cleanPhone,
+      driverBadge: badge,
+      driverEmail: email,
+      driverPin: pin,
+      type: vehicleType || 'Heavy Compactor (14T)',
+      status: 'Active',
+      lastLocation: `${wardSector || 'North-West Zone (Sola/Chandlodiya)'}, Ahmedabad`,
+      coordinates: coordinates || { lat: 23.0784, lng: 72.5441 },
+      speed: 0,
+      heading: 'N',
+      batteryOrFuel: Number(initialFuel) || 95,
+      loadCapacityPercent: Number(initialLoad) || 0,
+      assignedRoute: assignedRoute || `Route N${nextIndex} - ${wardSector || 'North/West Ahmedabad Corridor'}`,
+      lastUpdated: 'Just now',
+    };
+
+    setVehicles((prev) => {
+      const updated = [newVehicle, ...prev];
+      try {
+        localStorage.setItem('swaachx_vehicles', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    // Also register credentials in user passwords vault so this driver can immediately authenticate
+    setUserPasswords((prev) => {
+      const updated = {
+        ...prev,
+        [email.toLowerCase()]: pin,
+        [badge.toLowerCase()]: pin,
+        [badge.toUpperCase()]: pin,
+        [cleanPhone.replace(/[^0-9]/g, '')]: pin,
+      };
+      try {
+        localStorage.setItem('swaachx_user_passwords', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    addToast(`🚛 Driver ${cleanName} (${badge}) & Truck ${vehicleId} registered into Fleet Database!`, 'success');
+    return { success: true, vehicle: newVehicle };
+  };
+
   // ============================================================================
   // COMMUNITY CLEANLINESS QUESTS & ECO KARMA ENGINE
   // ============================================================================
@@ -2268,6 +2342,7 @@ export const DashboardProvider = ({ children }) => {
         sendEmailOtp,
         verifyEmailOtp,
         checkDuplicateCredentials,
+        registerNewDriverVehicle,
         authorizedDrivers: AUTHORIZED_DRIVERS_DATABASE,
         verifyDriverCredentials,
         isAuthorizedDriverEmail,

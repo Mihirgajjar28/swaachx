@@ -42,6 +42,9 @@ import {
   TrendingUp,
   Cpu,
   Check,
+  UserPlus,
+  X,
+  Key,
 } from 'lucide-react';
 
 export const AdminDashboardView = () => {
@@ -58,6 +61,7 @@ export const AdminDashboardView = () => {
     dispatchDriverToReport,
     resolveReport,
     emptyDustbin,
+    registerNewDriverVehicle,
     addToast,
     logoutUser,
   } = useDashboard();
@@ -122,6 +126,60 @@ export const AdminDashboardView = () => {
   const [selectedTracingReport, setSelectedTracingReport] = useState(null);
   const [dispatchOverrideModal, setDispatchOverrideModal] = useState(null);
   const [overrideVehicleId, setOverrideVehicleId] = useState('TRK-AMD-801');
+
+  // Driver & Vehicle Registration Modal (Chief Fleet Operations Officer ADM-AMC-003)
+  const [isDriverRegisterOpen, setIsDriverRegisterOpen] = useState(false);
+  const [driverFormData, setDriverFormData] = useState({
+    driverName: '',
+    driverPhone: '',
+    driverBadge: '',
+    driverEmail: '',
+    driverPin: '',
+    vehiclePlate: '',
+    vehicleType: 'Heavy Compactor (14T)',
+    assignedRoute: 'Route N11 - North-West SG Highway & Sola Corridor',
+    wardSector: 'North-West Zone (Sola & Gota)',
+    initialFuel: 95,
+    initialLoad: 10,
+  });
+
+  const handleDriverRegisterSubmit = (e) => {
+    e.preventDefault();
+    if (!driverFormData.driverName.trim()) {
+      addToast('Please enter the driver full name.', 'error');
+      return;
+    }
+    const result = registerNewDriverVehicle({
+      driverName: driverFormData.driverName,
+      driverPhone: driverFormData.driverPhone,
+      driverBadge: driverFormData.driverBadge,
+      driverEmail: driverFormData.driverEmail,
+      driverPin: driverFormData.driverPin,
+      vehiclePlate: driverFormData.vehiclePlate,
+      vehicleType: driverFormData.vehicleType,
+      assignedRoute: driverFormData.assignedRoute,
+      wardSector: driverFormData.wardSector,
+      initialFuel: driverFormData.initialFuel,
+      initialLoad: driverFormData.initialLoad,
+    });
+
+    if (result?.success) {
+      setIsDriverRegisterOpen(false);
+      setDriverFormData({
+        driverName: '',
+        driverPhone: '',
+        driverBadge: '',
+        driverEmail: '',
+        driverPin: '',
+        vehiclePlate: '',
+        vehicleType: 'Heavy Compactor (14T)',
+        assignedRoute: 'Route N11 - North-West SG Highway & Sola Corridor',
+        wardSector: 'North-West Zone (Sola & Gota)',
+        initialFuel: 95,
+        initialLoad: 10,
+      });
+    }
+  };
 
   // Filtered Reports
   const filteredReports = useMemo(() => {
@@ -1084,15 +1142,25 @@ export const AdminDashboardView = () => {
         {/* 11. MUNICIPAL FLEET & TRUCKS DIAGNOSTICS (Fleet Chief) */}
         {adminTab === 'fleet' && (
           <div className="glass-card">
-            <div className="card-header">
+            <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <h3 className="card-title">
                   <Truck size={18} style={{ color: '#8b5cf6' }} />
-                  Municipal Fleet Compactor Trucks (10 Units Telemetry)
+                  Municipal Fleet Compactor Trucks ({vehicles.length} Units Telemetry)
                 </h3>
                 <p className="card-subtitle">Heavy compactor payload tonnage, fuel diagnostics, and driver assignments</p>
               </div>
-              <span className="badge badge-active">10 Trucks Active</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="badge badge-active">{vehicles.length} Trucks Active</span>
+                <button
+                  onClick={() => setIsDriverRegisterOpen(true)}
+                  className="btn btn-primary btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#fff' }}
+                >
+                  <UserPlus size={14} />
+                  <span>Register Driver & Truck</span>
+                </button>
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -1506,6 +1574,303 @@ export const AdminDashboardView = () => {
           onClose={() => setSelectedTracingReport(null)}
           isDriverMode={true}
         />
+
+        {/* 15. DRIVER & VEHICLE REGISTRATION MODAL (Chief Fleet Operations Officer ADM-AMC-003) */}
+        {isDriverRegisterOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
+            }}
+          >
+            <div
+              className="glass-card"
+              style={{
+                width: '100%',
+                maxWidth: '560px',
+                background: '#0f172a',
+                border: '1px solid rgba(139, 92, 246, 0.4)',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ffffff',
+                    }}
+                  >
+                    <UserPlus size={18} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                      Register New Driver & Vehicle
+                    </h3>
+                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                      Chief Fleet Operations Officer (North/West Command) • Direct Database Provisioning
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setIsDriverRegisterOpen(false)}
+                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleDriverRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Driver Full Name <span style={{ color: '#f43f5e' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Kailash Solanki"
+                      value={driverFormData.driverName}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, driverName: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Mobile Phone Number <span style={{ color: '#f43f5e' }}>*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. +91 98255 12345"
+                      value={driverFormData.driverPhone}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, driverPhone: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Driver Badge Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={`e.g. DRV-8${vehicles.length + 1 < 10 ? '0' + (vehicles.length + 1) : vehicles.length + 1}`}
+                      value={driverFormData.driverBadge}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, driverBadge: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                        fontFamily: 'monospace',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Driver Fleet Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="e.g. kailash.s@wastefleet.org"
+                      value={driverFormData.driverEmail}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, driverEmail: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Login Security PIN / Password
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. FLT-811-AUTH"
+                      value={driverFormData.driverPin}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, driverPin: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                        fontFamily: 'monospace',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Vehicle Registration Plate
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={`e.g. GJ-01-FL-${1000 + vehicles.length + 1}`}
+                      value={driverFormData.vehiclePlate}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, vehiclePlate: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                        fontFamily: 'monospace',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Vehicle Type
+                    </label>
+                    <select
+                      value={driverFormData.vehicleType}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, vehicleType: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="Heavy Compactor (14T)">Heavy Compactor (14T)</option>
+                      <option value="Electric Tipper (4.5T)">Electric Tipper (4.5T)</option>
+                      <option value="Hydraulic Side-Loader (8T)">Hydraulic Side-Loader (8T)</option>
+                      <option value="Mini EV Sweeper (2T)">Mini EV Sweeper (2T)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Assigned Ward / Sector
+                    </label>
+                    <select
+                      value={driverFormData.wardSector}
+                      onChange={(e) => setDriverFormData({ ...driverFormData, wardSector: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="North-West Zone (Sola & Gota)">North-West Zone (Sola & Gota)</option>
+                      <option value="West Zone (Vastrapur & Bodakdev)">West Zone (Vastrapur & Bodakdev)</option>
+                      <option value="Central Zone (Kalupur & Relief Road)">Central Zone (Kalupur & Relief Road)</option>
+                      <option value="South-West Zone (Prahlad Nagar)">South-West Zone (Prahlad Nagar)</option>
+                      <option value="North Zone (Chandlodiya & Ranip)">North Zone (Chandlodiya & Ranip)</option>
+                      <option value="East Zone (Naroda & Odhav)">East Zone (Naroda & Odhav)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(139, 92, 246, 0.08)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                    fontSize: '11.5px',
+                    color: '#c4b5fd',
+                  }}
+                >
+                  ℹ️ <strong>Direct Fleet Injection:</strong> The new driver and assigned vehicle will be added to the live fleet database immediately. The driver can immediately log in using their Badge ID or Phone Number.
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsDriverRegisterOpen(false)}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-sm"
+                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#ffffff' }}
+                  >
+                    Add Driver to Vehicles Database
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </DesktopOnlyGuard>
   );
