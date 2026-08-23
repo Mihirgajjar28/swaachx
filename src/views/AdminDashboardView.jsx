@@ -1256,8 +1256,16 @@ export const AdminDashboardView = () => {
                         {v.batteryOrFuel || 92}%
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                        <span className="badge badge-active" style={{ fontSize: '10px' }}>
-                          {v.status || 'Active'}
+                        <span
+                          className={`badge ${v.status === 'Active' || v.status === 'Online' ? 'badge-active' : v.status === 'Offline' ? 'badge-neutral' : 'badge-warning'}`}
+                          style={{
+                            fontSize: '10px',
+                            background: v.status === 'Offline' ? 'rgba(100, 116, 139, 0.15)' : undefined,
+                            color: v.status === 'Offline' ? '#94a3b8' : undefined,
+                            border: v.status === 'Offline' ? '1px solid #475569' : undefined,
+                          }}
+                        >
+                          {v.status === 'Offline' ? '● Offline' : `● ${v.status || 'Active'}`}
                         </span>
                       </td>
                     </tr>

@@ -1614,7 +1614,85 @@ export const DashboardProvider = ({ children }) => {
     return { success: true, user };
   };
 
+  // Live Driver Telemetry Sync: When driver logs in, set status to Active and sync live GPS coordinates
+  useEffect(() => {
+    if (!currentUser) return;
+    const isDriverUser = currentUser.role === 'Fleet Driver' || currentUser.role === 'Driver' || Boolean(currentUser.badgeId);
+    if (!isDriverUser) return;
+
+    const badge = (currentUser.badgeId || currentUser.driverBadge || '').toUpperCase().trim();
+    const email = (currentUser.email || '').toLowerCase().trim();
+    const name = (currentUser.name || '').toLowerCase().trim();
+    const assignedVehId = (currentUser.assignedVehicleId || '').toUpperCase().trim();
+
+    setVehicles((prev) => {
+      let changed = false;
+      const updated = prev.map((v) => {
+        const isMatch =
+          (badge && v.driverBadge && v.driverBadge.toUpperCase() === badge) ||
+          (email && v.driverEmail && v.driverEmail.toLowerCase() === email) ||
+          (name && v.driverName && v.driverName.toLowerCase() === name) ||
+          (assignedVehId && v.id && v.id.toUpperCase() === assignedVehId);
+
+        if (isMatch) {
+          const targetCoords = userLocation || v.coordinates || { lat: 23.0338, lng: 72.5850 };
+          const needsUpdate = v.status !== 'Active' || !v.coordinates || (userLocation && (v.coordinates.lat !== userLocation.lat || v.coordinates.lng !== userLocation.lng));
+          if (needsUpdate) {
+            changed = true;
+            return {
+              ...v,
+              status: 'Active',
+              coordinates: targetCoords,
+              lastLocation: currentUser.ward ? `${currentUser.ward}, Ahmedabad (Live Telemetry)` : v.lastLocation,
+              speed: v.speed && v.speed > 0 ? v.speed : 18,
+              lastUpdated: 'Live GPS Connected',
+            };
+          }
+        }
+        return v;
+      });
+
+      if (changed) {
+        try {
+          localStorage.setItem('swaachx_vehicles', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      }
+      return prev;
+    });
+  }, [currentUser, userLocation]);
+
   const logoutUser = async () => {
+    if (currentUser?.role === 'Fleet Driver' || currentUser?.badgeId) {
+      const badge = (currentUser.badgeId || currentUser.driverBadge || '').toUpperCase().trim();
+      const email = (currentUser.email || '').toLowerCase().trim();
+      const name = (currentUser.name || '').toLowerCase().trim();
+      const assignedVehId = (currentUser.assignedVehicleId || '').toUpperCase().trim();
+
+      setVehicles((prev) => {
+        const updated = prev.map((v) => {
+          const isMatch =
+            (badge && v.driverBadge && v.driverBadge.toUpperCase() === badge) ||
+            (email && v.driverEmail && v.driverEmail.toLowerCase() === email) ||
+            (name && v.driverName && v.driverName.toLowerCase() === name) ||
+            (assignedVehId && v.id && v.id.toUpperCase() === assignedVehId);
+          if (isMatch) {
+            return {
+              ...v,
+              status: 'Offline',
+              speed: 0,
+              lastUpdated: 'Offline',
+            };
+          }
+          return v;
+        });
+        try {
+          localStorage.setItem('swaachx_vehicles', JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
+    }
+
     if (isSupabaseConfigured()) {
       try {
         await supabase.auth.signOut();
@@ -2140,15 +2218,15 @@ export const DashboardProvider = ({ children }) => {
       driverEmail: email,
       driverPin: pin,
       type: vehicleType || 'Heavy Compactor (14T)',
-      status: 'Active',
-      lastLocation: `${wardSector || 'North-West Zone (Sola/Chandlodiya)'}, Ahmedabad`,
+      status: 'Offline',
+      lastLocation: `${wardSector || 'North-West Zone (Sola/Chandlodiya)'}, Ahmedabad (Offline - Awaiting Sign-In)`,
       coordinates: coordinates || { lat: 23.0784, lng: 72.5441 },
       speed: 0,
       heading: 'N',
       batteryOrFuel: Number(initialFuel) || 95,
       loadCapacityPercent: Number(initialLoad) || 0,
       assignedRoute: assignedRoute || `Route N${nextIndex} - ${wardSector || 'North/West Ahmedabad Corridor'}`,
-      lastUpdated: 'Just now',
+      lastUpdated: 'Offline',
     };
 
     setVehicles((prev) => {

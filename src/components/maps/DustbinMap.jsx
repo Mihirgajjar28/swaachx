@@ -428,7 +428,7 @@ export const DustbinMap = ({
         {/* 4. Live Ahmedabad Fleet Trucks Layer */}
         {showTrucks &&
           vehicles.map((truck) => {
-            if (!truck.coordinates || !truck.coordinates.lat || !truck.coordinates.lng) return null;
+            if (!truck.coordinates || !truck.coordinates.lat || !truck.coordinates.lng || truck.status === 'Offline') return null;
             const statusColor = truck.status === 'Active' ? '#10b981' : truck.status === 'Idle' ? '#f59e0b' : '#64748b';
 
             return (

@@ -575,6 +575,7 @@ export const FleetGisMarkers = ({
         const lat = v.coordinates?.lat ?? v.latitude ?? (Array.isArray(v.coords) ? v.coords[0] : null);
         const lng = v.coordinates?.lng ?? v.longitude ?? (Array.isArray(v.coords) ? v.coords[1] : null);
         if (!lat || !lng) return null;
+        if (v.status === 'Offline') return null;
 
         const driverName = v.driverName || v.driver_name || 'Municipal Driver';
         const plateNumber = v.plateNumber || v.plate_number || 'GJ-01-CZ-4821';
