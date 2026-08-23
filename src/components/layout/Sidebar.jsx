@@ -99,6 +99,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         { id: 'hotspots', label: 'Predictive Hotspots', icon: Flame, badge: null, description: 'Surveillance & Surge Patrols' },
         { id: 'quests-approval', label: 'Community Quests', icon: Users, badge: null, description: 'Grants & Certification' },
         { id: 'mrf', label: 'MRF & Diversion', icon: Recycle, badge: null, description: 'Waste Treatment Yield' },
+        { id: 'officers', label: 'Officer Registry', icon: Shield, badge: null, description: 'Appoint Fleet Chiefs' },
         { id: 'audit-logs', label: 'Directorate Audits', icon: Activity, badge: null, description: 'SWM Action Logs' },
       ];
     }

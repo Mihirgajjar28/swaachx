@@ -12,6 +12,8 @@ import {
 } from '../lib/driverCredentials';
 import {
   AUTHORIZED_ADMINS_DATABASE,
+  dynamicAdminRegistry,
+  registerNewAdminOfficer,
   verifyAdminCredentials,
   verifyAdminInSupabase,
   isMunicipalAdminEmail,
@@ -2285,8 +2287,102 @@ export const DashboardProvider = ({ children }) => {
   };
 
   // ============================================================================
-  // COMMUNITY CLEANLINESS QUESTS & ECO KARMA ENGINE
+  // MUNICIPAL OFFICERS & CHIEF FLEET OPERATIONS OFFICERS REGISTRY
   // ============================================================================
+  const DEFAULT_OFFICERS_REGISTRY = [
+    { id: 'OFF-AMC-101', name: 'Dr. Ramesh G. Vora (IAS)', designation: 'Deputy Municipal Commissioner (Solid Waste)', zone: 'Central & West Zones', phone: '+91 98251 11201', email: 'r.vora@amc.gov.in', status: 'Active on Duty' },
+    { id: 'OFF-AMC-102', name: 'Smt. Ananya Trivedi', designation: 'Chief Medical Officer of Health (Sanitation)', zone: 'North & East Zones', phone: '+91 98252 33409', email: 'a.trivedi@amc.gov.in', status: 'Active on Duty' },
+    { id: 'OFF-AMC-103', name: 'Shri Vikram K. Solanki', designation: 'Superintending Engineer (MRF & Landfills)', zone: 'Pirana & Danapith Plants', phone: '+91 98254 55671', email: 'v.solanki@amc.gov.in', status: 'On Field Inspection' },
+    { id: 'OFF-AMC-104', name: 'Shri Pravin B. Parmar', designation: 'Zonal Health & Hygiene Officer', zone: 'North-West Zone (Sola/Chandlodiya)', phone: '+91 98259 88712', email: 'p.parmar@amc.gov.in', status: 'Active on Duty' },
+    { id: 'ADM-AMC-003', name: 'Shri Rajeshwar Verma', designation: 'Chief Fleet Operations Officer (North/West)', zone: 'North & West Ahmedabad Zones', phone: '+91 98980 33412', email: 'operations.head@municipal.gov.in', status: 'Active on Duty' },
+  ];
+
+  const getStoredOfficers = () => {
+    try {
+      const saved = localStorage.getItem('swaachx_officers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return DEFAULT_OFFICERS_REGISTRY;
+  };
+
+  const [officers, setOfficers] = useState(() => getStoredOfficers());
+
+  /**
+   * Commissioning Action (Municipal Commissioner / Sanitation Commissioner):
+   * Appoints and provisions a new Chief Fleet Operations Officer into official registry and admin auth database.
+   */
+  const appointChiefOperationsOfficer = ({
+    name,
+    designation = 'Chief Fleet Operations Officer',
+    zone = 'North & West Ahmedabad Command',
+    phone,
+    email,
+    password = 'FleetAdmin2026!',
+    securityClearance = 'Level 4 (Operations Command)',
+  }) => {
+    const cleanName = (name || 'Operations Officer').trim();
+    const nextIndex = officers.length + 1;
+    const officerId = `ADM-AMC-00${nextIndex > 9 ? nextIndex : nextIndex}`;
+    const nameParts = cleanName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const nameSlug = nameParts.length >= 2 ? `${nameParts[0]}.${nameParts[nameParts.length - 1]}` : (nameParts[0] || 'operations');
+    const officialEmail = (email || `${nameSlug}.amc@municipal.gov.in`).toLowerCase().trim();
+    const cleanPhone = (phone || `+91 98980 ${Math.floor(10000 + Math.random() * 90000)}`).trim();
+    const pass = (password || 'FleetAdmin2026!').trim();
+
+    const newOfficer = {
+      id: officerId,
+      name: cleanName,
+      email: officialEmail,
+      phone: cleanPhone,
+      role: 'Operations Chief',
+      designation: designation || 'Chief Fleet Operations Officer',
+      department: 'AMC Central Sanitation Depot & Fleet Directorate',
+      jurisdiction: zone || 'North & West Ahmedabad Zones',
+      zone: zone || 'North & West Ahmedabad Zones',
+      securityClearance,
+      avatarEmoji: '🚛',
+      passwordFallback: pass,
+      status: 'Active on Duty',
+      appointedAt: new Date().toISOString(),
+      permissions: [
+        'FLEET_OVERRIDE_DISPATCH',
+        'INCIDENT_VERIFY_RESOLVE',
+        'DRIVER_MANAGEMENT',
+        'IOT_CALIBRATION',
+      ],
+    };
+
+    setOfficers((prev) => {
+      const updated = [newOfficer, ...prev];
+      try {
+        localStorage.setItem('swaachx_officers', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    // Register into dynamic admin registry for immediate login
+    registerNewAdminOfficer(newOfficer);
+
+    // Save in user password vault
+    setUserPasswords((prev) => {
+      const updated = {
+        ...prev,
+        [officialEmail]: pass,
+        [officerId.toLowerCase()]: pass,
+        [officerId.toUpperCase()]: pass,
+      };
+      try {
+        localStorage.setItem('swaachx_user_passwords', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    addToast(`🏛️ Executive Commission Issued: ${cleanName} appointed as ${designation}!`, 'success');
+    return { success: true, officer: newOfficer };
+  };
   const [communityQuests, setCommunityQuests] = useState(() => getStoredCommunityQuests());
 
   // Dynamic user karma points calculation (Base + Reports + Drives)
@@ -2452,6 +2548,9 @@ export const DashboardProvider = ({ children }) => {
         verifyEmailOtp,
         checkDuplicateCredentials,
         registerNewDriverVehicle,
+        officers,
+        setOfficers,
+        appointChiefOperationsOfficer,
         authorizedDrivers: AUTHORIZED_DRIVERS_DATABASE,
         verifyDriverCredentials,
         isAuthorizedDriverEmail,

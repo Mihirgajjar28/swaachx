@@ -62,6 +62,8 @@ export const AdminDashboardView = () => {
     resolveReport,
     emptyDustbin,
     registerNewDriverVehicle,
+    officers = [],
+    appointChiefOperationsOfficer,
     addToast,
     logoutUser,
   } = useDashboard();
@@ -231,6 +233,71 @@ export const AdminDashboardView = () => {
         initialFuel: 95,
         initialLoad: 10,
       });
+    }
+  };
+
+  // Officer Commissioning Modal State (Sanitation Commissioner / Municipal Commissioner)
+  const [isOfficerModalOpen, setIsOfficerModalOpen] = useState(false);
+  const nextOfficerIdx = (officers || []).length + 1;
+  const nextOfficerId = `ADM-AMC-00${nextOfficerIdx > 9 ? nextOfficerIdx : nextOfficerIdx}`;
+
+  const [officerFormData, setOfficerFormData] = useState({
+    officerName: '',
+    officerId: nextOfficerId,
+    designation: 'Chief Fleet Operations Officer',
+    zone: 'North & West Ahmedabad Command',
+    phone: '',
+    email: '',
+    password: 'FleetAdmin2026!',
+    securityClearance: 'Level 4 (Operations Command)',
+  });
+
+  const handleOfficerNameChange = (name) => {
+    const cleanNameParts = name.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const nameSlug = cleanNameParts.length >= 2 ? `${cleanNameParts[0]}.${cleanNameParts[cleanNameParts.length - 1]}` : (cleanNameParts[0] || 'operations');
+    const autoEmail = name.trim() ? `${nameSlug}.amc@municipal.gov.in` : '';
+    setOfficerFormData((prev) => ({
+      ...prev,
+      officerName: name,
+      email: autoEmail,
+    }));
+  };
+
+  const openOfficerCommissionModal = () => {
+    const freshIdx = (officers || []).length + 1;
+    const freshId = `ADM-AMC-00${freshIdx > 9 ? freshIdx : freshIdx}`;
+    setOfficerFormData({
+      officerName: '',
+      officerId: freshId,
+      designation: 'Chief Fleet Operations Officer',
+      zone: 'North & West Ahmedabad Command',
+      phone: '',
+      email: '',
+      password: 'FleetAdmin2026!',
+      securityClearance: 'Level 4 (Operations Command)',
+    });
+    setIsOfficerModalOpen(true);
+  };
+
+  const handleOfficerCommissionSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const cleanName = (officerFormData.officerName || '').trim();
+    if (!cleanName) {
+      addToast('Please enter the officer full name.', 'error');
+      return;
+    }
+    const result = appointChiefOperationsOfficer({
+      name: cleanName,
+      designation: officerFormData.designation || 'Chief Fleet Operations Officer',
+      zone: officerFormData.zone || 'North & West Ahmedabad Command',
+      phone: officerFormData.phone,
+      email: officerFormData.email,
+      password: officerFormData.password || 'FleetAdmin2026!',
+      securityClearance: officerFormData.securityClearance || 'Level 4 (Operations Command)',
+    });
+
+    if (result?.success) {
+      setIsOfficerModalOpen(false);
     }
   };
 
@@ -749,18 +816,42 @@ export const AdminDashboardView = () => {
           </div>
         )}
 
-        {/* 5. OFFICER REGISTRY (Commissioner Exclusive) */}
+        {/* 5. OFFICER REGISTRY (Commissioner & Sanitation Director) */}
         {adminTab === 'officers' && (
           <div className="glass-card">
-            <div className="card-header">
+            <div className="card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <h3 className="card-title">
                   <Shield size={18} style={{ color: '#0ea5e9' }} />
-                  Municipal Officers & Deputy Commissioners Registry
+                  Municipal Executive Officers & Chief Fleet Operations Directory
                 </h3>
-                <p className="card-subtitle">Certified AMC Solid Waste Management leadership directory and security clearance levels</p>
+                <p className="card-subtitle">Certified AMC Solid Waste Management leadership directory, executive commissioning, and security clearance levels</p>
               </div>
-              <span className="badge badge-neutral">4 Deputy Heads</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="badge badge-active">{officers.length} Executive Officers</span>
+                {(isSuperAdmin || isSanitationDirector) && (
+                  <button
+                    type="button"
+                    onClick={openOfficerCommissionModal}
+                    className="btn btn-primary btn-sm"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                      border: 'none',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <UserPlus size={14} />
+                    <span>Appoint Chief Fleet Operations Officer</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div style={{ overflowX: 'auto' }}>
@@ -771,31 +862,44 @@ export const AdminDashboardView = () => {
                     <th style={{ padding: '10px 14px', fontWeight: 800 }}>Officer Name</th>
                     <th style={{ padding: '10px 14px', fontWeight: 800 }}>Designation</th>
                     <th style={{ padding: '10px 14px', fontWeight: 800 }}>Jurisdiction / Zone</th>
-                    <th style={{ padding: '10px 14px', fontWeight: 800 }}>Official Contact</th>
+                    <th style={{ padding: '10px 14px', fontWeight: 800 }}>Official Email & Contact</th>
                     <th style={{ padding: '10px 14px', fontWeight: 800, textAlign: 'right' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {officerRegistry.map((off) => (
+                  {officers.map((off) => (
                     <tr key={off.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                       <td style={{ padding: '10px 14px', fontFamily: 'monospace', fontWeight: 700, color: '#0ea5e9' }}>
                         {off.id}
                       </td>
                       <td style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {off.name}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{off.avatarEmoji || '🏛️'}</span>
+                          <span>{off.name}</span>
+                        </div>
                       </td>
                       <td style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>
-                        {off.designation}
+                        <strong>{off.designation}</strong>
+                        {off.securityClearance && (
+                          <div style={{ fontSize: '10.5px', color: '#10b981', marginTop: '2px' }}>
+                            🛡️ {off.securityClearance}
+                          </div>
+                        )}
                       </td>
                       <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>
-                        {off.zone}
+                        {off.zone || off.jurisdiction}
                       </td>
-                      <td style={{ padding: '10px 14px', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
-                        {off.phone}
+                      <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>
+                        <div style={{ fontFamily: 'monospace', color: '#38bdf8', fontSize: '11px' }}>
+                          {off.email || `${off.id.toLowerCase()}@amc.gov.in`}
+                        </div>
+                        <div style={{ fontFamily: 'monospace', fontSize: '11px', marginTop: '2px' }}>
+                          {off.phone}
+                        </div>
                       </td>
                       <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                         <span className="badge badge-active" style={{ fontSize: '10px' }}>
-                          {off.status}
+                          {off.status || 'Active on Duty'}
                         </span>
                       </td>
                     </tr>
@@ -1942,6 +2046,299 @@ export const AdminDashboardView = () => {
                     style={{ fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#ffffff', cursor: 'pointer' }}
                   >
                     Add Driver to Vehicles Database
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* EXECUTIVE COMMISSIONING MODAL (Appoint Chief Fleet Operations Officer) */}
+        {isOfficerModalOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 99999,
+              background: 'rgba(0, 0, 0, 0.75)',
+              backdropFilter: 'blur(6px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
+            }}
+          >
+            <div
+              className="glass-card"
+              style={{
+                width: '100%',
+                maxWidth: '560px',
+                background: '#0f172a',
+                border: '1px solid #0284c7',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(14, 165, 233, 0.2)',
+                borderRadius: '16px',
+                padding: '24px',
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', borderBottom: '1px solid #1e293b', paddingBottom: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ffffff',
+                    }}
+                  >
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#ffffff', margin: 0 }}>
+                      Executive Commissioning Console
+                    </h3>
+                    <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>
+                      Appoint Chief Fleet Operations Officer • Office of City Sanitation Commissioner
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsOfficerModalOpen(false)}
+                  style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleOfficerCommissionSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Officer Full Name <span style={{ color: '#f43f5e' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Shri Harshad P. Vaghela"
+                      value={officerFormData.officerName}
+                      onChange={(e) => handleOfficerNameChange(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Official Mobile Phone <span style={{ color: '#f43f5e' }}>*</span>
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. +91 98980 44556"
+                      value={officerFormData.phone}
+                      onChange={(e) => setOfficerFormData({ ...officerFormData, phone: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Officer Admin ID (Auto)
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={officerFormData.officerId}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#0b1329',
+                        color: '#38bdf8',
+                        fontFamily: 'monospace',
+                        fontWeight: 700,
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Official AMC Email (Auto)
+                    </label>
+                    <input
+                      type="email"
+                      readOnly
+                      value={officerFormData.email || 'harshad.vaghela.amc@municipal.gov.in'}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#0b1329',
+                        color: '#38bdf8',
+                        fontSize: '12px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Designation
+                    </label>
+                    <select
+                      value={officerFormData.designation}
+                      onChange={(e) => setOfficerFormData({ ...officerFormData, designation: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="Chief Fleet Operations Officer">Chief Fleet Operations Officer</option>
+                      <option value="Chief Fleet Operations Officer (North/West)">Chief Fleet Operations Officer (North/West)</option>
+                      <option value="Chief Fleet Operations Officer (East/South)">Chief Fleet Operations Officer (East/South)</option>
+                      <option value="Superintending Logistics Officer">Superintending Logistics Officer</option>
+                      <option value="Zonal Fleet Operations Commissioner">Zonal Fleet Operations Commissioner</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Zonal Jurisdiction
+                    </label>
+                    <select
+                      value={officerFormData.zone}
+                      onChange={(e) => setOfficerFormData({ ...officerFormData, zone: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        outline: 'none',
+                      }}
+                    >
+                      <option value="North & West Ahmedabad Zones">North & West Ahmedabad Zones</option>
+                      <option value="East & South Ahmedabad Zones">East & South Ahmedabad Zones</option>
+                      <option value="Central & Riverfront Special Zone">Central & Riverfront Special Zone</option>
+                      <option value="All Metropolitan Corridors (City-Wide)">All Metropolitan Corridors (City-Wide)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Access Key / Password
+                    </label>
+                    <input
+                      type="text"
+                      value={officerFormData.password}
+                      onChange={(e) => setOfficerFormData({ ...officerFormData, password: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#1e293b',
+                        color: '#ffffff',
+                        fontFamily: 'monospace',
+                        fontSize: '12.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
+                      Security Clearance Level
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value="Level 4 (Fleet & Logistics Operations Command)"
+                      style={{
+                        width: '100%',
+                        padding: '9px 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #334155',
+                        background: '#0b1329',
+                        color: '#10b981',
+                        fontWeight: 700,
+                        fontSize: '11.5px',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '8px',
+                    background: 'rgba(14, 165, 233, 0.08)',
+                    border: '1px solid rgba(14, 165, 233, 0.2)',
+                    fontSize: '11.5px',
+                    color: '#7dd3fc',
+                  }}
+                >
+                  🏛️ <strong>Executive Commission Mandate:</strong> Appointing this officer provisions their executive credentials into the live Municipal Officers Directory. They can immediately log in as Chief Fleet Operations Officer to register drivers and manage fleet logistics.
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsOfficerModalOpen(false)}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    onClick={(e) => handleOfficerCommissionSubmit(e)}
+                    className="btn btn-primary btn-sm"
+                    style={{ fontWeight: 800, background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none', color: '#ffffff', cursor: 'pointer' }}
+                  >
+                    Appoint Officer to Leadership Directory
                   </button>
                 </div>
               </form>
