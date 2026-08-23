@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useDashboard } from '../../context/DashboardContext';
-import { verifyAdminCredentials, AUTHORIZED_ADMINS_DATABASE } from '../../lib/adminCredentials';
+import { verifyAdminCredentials, getAuthorizedAdmins, AUTHORIZED_ADMINS_DATABASE } from '../../lib/adminCredentials';
 import {
   Shield,
   Lock,
@@ -274,41 +274,19 @@ export const AdminLoginModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* 3 Quick-Login Administrator Profiles */}
+          {/* Quick-Login Administrator Profiles */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              ⚡ Select Certified Admin Profile (1-Click Fill):
+              ⚡ Certified Executive Admin Profiles (1-Click Fill):
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '6px' }}>
-              {[
-                {
-                  label: 'Commissioner',
-                  icon: '🏛️',
-                  email: 'admin@municipal.gov.in',
-                  pass: 'Admin@2026Password',
-                  badge: 'Level 5 Super Admin',
-                },
-                {
-                  label: 'SWM Director',
-                  icon: '🛡️',
-                  email: 'commissioner@ahmedabad.gov.in',
-                  pass: 'AMC-Admin#2026',
-                  badge: 'Level 4 SWM Head',
-                },
-                {
-                  label: 'Fleet Chief',
-                  icon: '🚛',
-                  email: 'operations.head@municipal.gov.in',
-                  pass: 'FleetAdmin2026!',
-                  badge: 'Level 4 Logistics',
-                },
-              ].map((adm, idx) => (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '6px', maxHeight: '150px', overflowY: 'auto' }}>
+              {getAuthorizedAdmins().map((adm, idx) => (
                 <button
-                  key={idx}
+                  key={adm.id || idx}
                   type="button"
                   onClick={() => {
                     setEmail(adm.email);
-                    setPassword(adm.pass);
+                    setPassword(adm.passwordFallback || 'FleetAdmin2026!');
                   }}
                   style={{
                     padding: '8px 10px',
@@ -327,11 +305,13 @@ export const AdminLoginModal = ({ isOpen, onClose }) => {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>{adm.icon}</span>
-                    <span>{adm.label}</span>
+                    <span>{adm.avatarEmoji || '🏛️'}</span>
+                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '120px' }}>
+                      {adm.designation?.split('(')[0] || adm.role}
+                    </span>
                   </div>
                   <span style={{ fontSize: '9.5px', color: email === adm.email ? '#38bdf8' : '#94a3b8', fontWeight: 600 }}>
-                    {adm.badge}
+                    {adm.id} • {adm.name?.split(' ')[0]}
                   </span>
                 </button>
               ))}
