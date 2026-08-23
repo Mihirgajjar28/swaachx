@@ -9,6 +9,7 @@ export const MapPlaceholder = ({
   activeItemsCount = 0,
   itemType = 'Vehicles',
   emptyMessage = 'No active GPS telemetry markers plotted.',
+  showHud = true,
   children,
 }) => {
   const mapRef = useRef(null);
@@ -26,22 +27,24 @@ export const MapPlaceholder = ({
   return (
     <div className="leaflet-map-wrapper">
       {/* Top HUD Telemetry Indicator */}
-      <div className="map-hud-overlay">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Radio size={13} className="animate-pulse" style={{ color: activeItemsCount > 0 ? '#10b981' : '#94a3b8' }} />
+      {showHud && (
+        <div className="map-hud-overlay">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Radio size={13} className="animate-pulse" style={{ color: activeItemsCount > 0 ? '#10b981' : '#94a3b8' }} />
+            <div className="map-hud-stat">
+              <span className="map-hud-stat-label">Feed Status</span>
+              <span className="map-hud-stat-val">{activeItemsCount > 0 ? 'Live Stream' : 'Standby'}</span>
+            </div>
+          </div>
+
+          <div style={{ width: '1px', height: '18px', background: 'var(--border-subtle)' }} />
+
           <div className="map-hud-stat">
-            <span className="map-hud-stat-label">Feed Status</span>
-            <span className="map-hud-stat-val">{activeItemsCount > 0 ? 'Live Stream' : 'Standby'}</span>
+            <span className="map-hud-stat-label">{itemType}</span>
+            <span className="map-hud-stat-val">{activeItemsCount}</span>
           </div>
         </div>
-
-        <div style={{ width: '1px', height: '18px', background: 'var(--border-subtle)' }} />
-
-        <div className="map-hud-stat">
-          <span className="map-hud-stat-label">{itemType}</span>
-          <span className="map-hud-stat-val">{activeItemsCount}</span>
-        </div>
-      </div>
+      )}
 
       {/* Empty State Overlay if count is 0 and no children */}
       {activeItemsCount === 0 && !children && (

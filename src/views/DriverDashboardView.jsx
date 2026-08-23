@@ -608,6 +608,7 @@ export const DriverDashboardView = () => {
                     activeItemsCount={1 + stops.length + assignedHotspots.length + assignedReports.length}
                     itemType="Truck, Bins & Hotspots"
                     emptyMessage="GPS transponder synchronized. Telemetry transmitting live."
+                    showHud={false}
                   >
                     <FleetGisMarkers
                       vehicles={[vehicle]}
