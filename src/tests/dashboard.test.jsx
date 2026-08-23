@@ -1376,5 +1376,53 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
     expect(result.binColor).toBeDefined();
     expect(result.upcyclingIdeas.length).toBeGreaterThan(0);
   });
+
+  it('55. Citizen Compulsory Waste Photo Verification: Gemini AI validates physical waste legitimacy and blocks fake submissions', async () => {
+    const { verifyReportWastePhoto } = await import('../lib/aiWasteAnalyzer');
+
+    // 1. Invalid Non-Waste Screenshot
+    const invalidResult = await verifyReportWastePhoto({
+      imageFile: { name: 'Screenshot_UI_Dashboard.png' },
+    });
+    expect(invalidResult.isValid).toBe(false);
+    expect(invalidResult.isLegitimateWaste).toBe(false);
+    expect(invalidResult.reason).toContain('not a waste item');
+
+    // 2. Valid Physical Plastic / Kitchen Waste Photo
+    const validResult = await verifyReportWastePhoto({
+      imageFile: { name: 'overflowing_plastic_bottles.jpg' },
+      textHint: 'plastic bottle waste garbage',
+    });
+    expect(validResult.isValid).toBe(true);
+    expect(validResult.isLegitimateWaste).toBe(true);
+    expect(validResult.wasteType).toBeDefined();
+    expect(validResult.binColor).toContain('Blue');
+  });
+
+  it('56. Driver Dual-Image AI Cleanup Verification Gate: Compares Before vs After photos and confirms site is clean before resolving', async () => {
+    const { verifyCleanupBeforeAfterWithGemini } = await import('../lib/aiWasteAnalyzer');
+
+    // 1. Test Uncleaned / Still Dirty Site -> Should be REJECTED (isClean: false)
+    const dirtyResult = await verifyCleanupBeforeAfterWithGemini({
+      beforeImage: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?w=500',
+      afterImage: { name: 'uncleaned_dirty_waste_pile.jpg' },
+      reportDetails: { id: 'REP-AMD-301', category: 'Overflowing Bin', location: 'Navrangpura Road' },
+    });
+    expect(dirtyResult.success).toBe(true);
+    expect(dirtyResult.isClean).toBe(false);
+    expect(dirtyResult.cleanlinessScore).toBeLessThan(80);
+    expect(dirtyResult.residualWasteDetected.length).toBeGreaterThan(0);
+
+    // 2. Test Genuine Cleared & Swept Site -> Should PASS (isClean: true, score >= 80)
+    const cleanResult = await verifyCleanupBeforeAfterWithGemini({
+      beforeImage: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?w=500',
+      afterImage: { name: 'clean_cleared_pavement.jpg' },
+      reportDetails: { id: 'REP-AMD-301', category: 'Overflowing Bin', location: 'Navrangpura Road' },
+    });
+    expect(cleanResult.success).toBe(true);
+    expect(cleanResult.isClean).toBe(true);
+    expect(cleanResult.cleanlinessScore).toBeGreaterThanOrEqual(80);
+    expect(cleanResult.status).toBe('Verified Clean');
+  });
 });
 

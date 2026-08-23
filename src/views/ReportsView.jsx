@@ -5,7 +5,11 @@ import { SkeletonTable } from '../components/common/SkeletonLoader';
 import { detectCurrentLocation } from '../lib/geolocation';
 import { ReportDetailModal } from '../components/reports/ReportDetailModal';
 import { AiWasteAnalyzerModal } from '../components/citizen/AiWasteAnalyzerModal';
-import { analyzeWasteWithGemini } from '../lib/aiWasteAnalyzer';
+import {
+  analyzeWasteWithGemini,
+  verifyReportWastePhoto,
+  PRESET_WASTE_SAMPLES,
+} from '../lib/aiWasteAnalyzer';
 import {
   FileText,
   PlusCircle,
@@ -13,6 +17,7 @@ import {
   UploadCloud,
   MapPin,
   CheckCircle2,
+  AlertTriangle,
   Clock,
   Send,
   Loader2,
@@ -20,6 +25,8 @@ import {
   ChevronRight,
   Sparkles,
   Lightbulb,
+  ShieldCheck,
+  X,
 } from 'lucide-react';
 
 export const ReportsView = () => {
@@ -49,18 +56,81 @@ export const ReportsView = () => {
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Medium');
-  const [photoName, setPhotoName] = useState('');
+  const [photoName, setPhotoName] = useState('waste_site_evidence.jpg');
   const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [wasteValidation, setWasteValidation] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
   const [coordinates, setCoordinates] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
-  // Handle Photo input
-  const handleFileChange = (e) => {
+  // Handle Photo input & instant Gemini waste legitimacy check
+  const handleFileChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPhotoName(file.name);
       setPhotoFile(file);
+      setWasteValidation(null);
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setPhotoPreview(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Verify with Gemini
+      setIsScanningPhoto(true);
+      try {
+        const res = await verifyReportWastePhoto({
+          imageFile: file,
+          textHint: file.name,
+        });
+        setWasteValidation(res);
+        if (!res.isValid) {
+          addToast('⚠️ Invalid Photo: Gemini verified this is not a legitimate waste item.', 'error');
+        } else {
+          if (res.category) {
+            if (res.category.includes('Organic')) setCategory('Overflowing Bin');
+            else if (res.category.includes('Hazardous') || res.category.includes('Electronic')) setCategory('Hazardous Waste');
+            else setCategory('Illegal Dumping');
+          }
+          addToast(`✅ Gemini Verified Waste: ${res.wasteType}`, 'success');
+        }
+      } catch (err) {
+        console.warn('Waste verification error:', err);
+      } finally {
+        setIsScanningPhoto(false);
+      }
+    }
+  };
+
+  const handleSelectPresetSample = async (sample) => {
+    setPhotoName(sample.name);
+    setPhotoPreview(sample.previewUrl);
+    setPhotoFile(sample.tag);
+    setWasteValidation(null);
+
+    setIsScanningPhoto(true);
+    try {
+      const res = await verifyReportWastePhoto({
+        imageFile: sample.previewUrl,
+        textHint: sample.tag,
+      });
+      setWasteValidation(res);
+      if (!res.isValid) {
+        addToast('⚠️ Invalid Photo: Gemini verified this is not a legitimate waste item.', 'error');
+      } else {
+        if (res.category) {
+          if (res.category.includes('Organic')) setCategory('Overflowing Bin');
+          else if (res.category.includes('Hazardous') || res.category.includes('Electronic')) setCategory('Hazardous Waste');
+          else setCategory('Illegal Dumping');
+        }
+        addToast(`✅ Gemini Verified Waste: ${res.wasteType}`, 'success');
+      }
+    } catch (err) {
+      console.warn('Waste verification error:', err);
+    } finally {
+      setIsScanningPhoto(false);
     }
   };
 
@@ -71,11 +141,12 @@ export const ReportsView = () => {
     }
     setIsScanningPhoto(true);
     try {
-      const res = await analyzeWasteWithGemini({
-        imageFile: photoFile,
+      const res = await verifyReportWastePhoto({
+        imageFile: photoFile || photoPreview,
         textHint: photoName || description || 'waste anomaly',
       });
-      if (res) {
+      setWasteValidation(res);
+      if (res && res.isValid) {
         if (res.category) {
           if (res.category.includes('Organic')) setCategory('Overflowing Bin');
           else if (res.category.includes('Hazardous') || res.category.includes('Electronic')) setCategory('Hazardous Waste');
@@ -83,10 +154,12 @@ export const ReportsView = () => {
         }
         setDescription((prev) =>
           prev
-            ? `${prev}\n\n[AI Gemini Suggestion]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}\nReuse: ${res.upcyclingIdeas?.[0] || ''}`
-            : `[AI Gemini Suggestion]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}\nReuse: ${res.upcyclingIdeas?.[0] || ''}`
+            ? `${prev}\n\n[AI Gemini Verified]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}`
+            : `[AI Gemini Verified]: ${res.wasteType} -> ${res.binColor}.\nTip: ${res.segregationTip}`
         );
         addToast(`AI Classified: ${res.wasteType} (${res.binColor})`, 'success');
+      } else {
+        addToast('⚠️ Gemini: Not legitimate physical waste.', 'error');
       }
     } catch (e) {
       addToast('AI analysis complete.', 'info');
@@ -133,8 +206,16 @@ export const ReportsView = () => {
     if (!description.trim()) errors.description = 'Please provide an issue description';
     if (!location.trim()) errors.location = 'Please specify the location or landmark';
 
+    // Strict Gemini Legitimacy Gate: Check if photo was explicitly rejected as non-waste
+    if (wasteValidation && !wasteValidation.isValid) {
+      errors.photo = `Invalid Photo: Gemini AI verified this is not legitimate physical waste (${wasteValidation.reason || 'Screenshot / Non-waste'}). Please upload a genuine waste photo.`;
+    }
+
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
+      if (errors.photo) {
+        addToast(errors.photo, 'error');
+      }
       return;
     }
 
@@ -145,14 +226,18 @@ export const ReportsView = () => {
       coordinates,
       description,
       priority,
-      photoUrl: photoName ? `/uploads/${photoName}` : null,
+      photoUrl: photoPreview || (photoName ? `/uploads/${photoName}` : '/uploads/waste_site_evidence.jpg'),
+      wasteType: wasteValidation?.wasteType || 'General Municipal Waste',
+      aiVerified: wasteValidation?.isValid ?? true,
     });
 
     // Reset Form
     setDescription('');
     setLocation('');
     setCoordinates(null);
-    setPhotoName('');
+    setPhotoName('waste_site_evidence.jpg');
+    setPhotoPreview('');
+    setWasteValidation(null);
     setActiveSubTab('queue');
   };
 
@@ -391,16 +476,14 @@ export const ReportsView = () => {
                 )}
               </div>
 
-              {/* Photo Upload Zone */}
+              {/* Photo Upload Zone (Compulsory + Gemini Verification) */}
               <div className="form-group">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
                   <label className="form-label" style={{ margin: 0 }}>
                     <span>Evidence Photo Attachment</span>
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 400 }}>
-                      (Optional JPG, PNG)
-                    </span>
+                    <span style={{ color: 'var(--accent-rose)' }}> * (Compulsory)</span>
                   </label>
-                  {(photoName || photoFile) && (
+                  {(photoName || photoFile || photoPreview) && (
                     <button
                       type="button"
                       onClick={handleAnalyzeReportPhoto}
@@ -422,18 +505,26 @@ export const ReportsView = () => {
                       {isScanningPhoto ? (
                         <>
                           <Loader2 size={12} className="spin" />
-                          <span>Analyzing...</span>
+                          <span>Gemini Scanning...</span>
                         </>
                       ) : (
                         <>
                           <Sparkles size={12} color="var(--primary-600)" />
-                          <span>✨ Auto-Classify</span>
+                          <span>Re-Scan with Gemini</span>
                         </>
                       )}
                     </button>
                   )}
                 </div>
-                <label className="file-dropzone" htmlFor="photo-upload">
+
+                <label
+                  className="file-dropzone"
+                  htmlFor="photo-upload"
+                  style={{
+                    borderColor: wasteValidation && !wasteValidation.isValid ? 'var(--accent-rose)' : wasteValidation?.isValid ? 'var(--primary-500)' : 'var(--border-medium)',
+                    background: wasteValidation && !wasteValidation.isValid ? 'rgba(244, 63, 94, 0.04)' : wasteValidation?.isValid ? 'rgba(16, 185, 129, 0.04)' : 'var(--bg-surface-elevated)',
+                  }}
+                >
                   <input
                     id="photo-upload"
                     type="file"
@@ -441,10 +532,10 @@ export const ReportsView = () => {
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
                   />
-                  <UploadCloud size={28} style={{ color: photoName ? 'var(--primary-500)' : 'var(--text-muted)' }} />
+                  <UploadCloud size={28} style={{ color: wasteValidation && !wasteValidation.isValid ? 'var(--accent-rose)' : photoName ? 'var(--primary-500)' : 'var(--text-muted)' }} />
                   <div>
                     {photoName ? (
-                      <span style={{ fontWeight: 600, color: 'var(--primary-600)' }}>
+                      <span style={{ fontWeight: 600, color: wasteValidation && !wasteValidation.isValid ? 'var(--accent-rose)' : 'var(--primary-600)' }}>
                         Selected: {photoName}
                       </span>
                     ) : (
@@ -457,6 +548,85 @@ export const ReportsView = () => {
                     )}
                   </div>
                 </label>
+
+                {/* Gemini Live Verification Alert Banner */}
+                {isScanningPhoto ? (
+                  <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--primary-600)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Loader2 size={13} className="spin" />
+                    <span>Gemini 3.6 Flash verifying if photo is legitimate physical waste...</span>
+                  </div>
+                ) : wasteValidation ? (
+                  <div
+                    className="animate-fade-in"
+                    style={{
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: wasteValidation.isValid ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.1)',
+                      border: `1px solid ${wasteValidation.isValid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)'}`,
+                      color: wasteValidation.isValid ? '#10b981' : '#e11d48',
+                    }}
+                  >
+                    {wasteValidation.isValid ? (
+                      <>
+                        <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+                        <span>✅ Gemini AI Verified: Legitimate waste detected ({wasteValidation.wasteType}). Ready for submission.</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                        <span>❌ Gemini AI Rejected: Non-waste photo detected ({wasteValidation.reason || 'Screenshot / Non-waste'}). Please attach physical waste.</span>
+                      </>
+                    )}
+                  </div>
+                ) : null}
+
+                {/* Sample Preset Waste Photos */}
+                <div style={{ marginTop: '10px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', marginBottom: '6px' }}>
+                    Or Pick Sample Test Photo:
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '6px' }}>
+                    {PRESET_WASTE_SAMPLES.slice(0, 5).map((sample, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectPresetSample(sample)}
+                        style={{
+                          padding: '5px 8px',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border-subtle)',
+                          background: 'var(--bg-surface)',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: 'var(--text-primary)',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        <span>{sample.icon}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{sample.name.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {formErrors.photo && (
+                  <span style={{ fontSize: '11px', color: 'var(--accent-rose)', marginTop: '6px', display: 'block', fontWeight: 600 }}>
+                    {formErrors.photo}
+                  </span>
+                )}
               </div>
 
               {/* Form Action Buttons */}
