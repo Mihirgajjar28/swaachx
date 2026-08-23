@@ -104,9 +104,6 @@ export const CitizenDashboardView = () => {
                 <h2 style={{ fontSize: '17px', fontWeight: 800, color: 'var(--text-primary)' }}>
                   Welcome, {currentUser?.name || 'Citizen Partner'}!
                 </h2>
-                <span className="badge badge-neutral" style={{ fontSize: '10px' }}>
-                  {currentUser?.ward || 'Ward 14 (North Sector)'}
-                </span>
               </div>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
                 Report municipal waste anomalies, track resolution stages & earn community eco karma points.
@@ -115,16 +112,6 @@ export const CitizenDashboardView = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <button
-              onClick={() => setActiveTab('dustbins')}
-              className="btn btn-outline btn-sm"
-              id="citizen-dustbins-cta"
-              style={{ background: 'var(--bg-surface)', borderColor: 'var(--primary-500)', color: 'var(--primary-600)', fontWeight: 700 }}
-            >
-              <Trash2 size={14} />
-              <span>📍 Nearby Dustbins</span>
-            </button>
-
             <button
               onClick={() => setActiveTab('reports')}
               className="btn btn-primary btn-sm"
