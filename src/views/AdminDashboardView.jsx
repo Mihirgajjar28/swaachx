@@ -155,17 +155,96 @@ export const AdminDashboardView = () => {
   const activeVehiclesCount = vehicles.filter((v) => v.status === 'Active').length;
   const criticalBins = dustbins.filter((b) => (b.fillLevel || 0) >= 80).length;
 
-  // 48 AMC Wards League Table Data
-  const wardRankings = useMemo(() => [
-    { rank: 1, ward: 'Ward 18 (Sola & Science City)', score: 98.4, sla: '99.2%', activeBins: 42, compliance: 'Grade A+', status: 'Exemplary' },
-    { rank: 2, ward: 'Ward 12 (Vastrapur & Bodakdev)', score: 97.1, sla: '98.5%', activeBins: 38, compliance: 'Grade A+', status: 'Exemplary' },
-    { rank: 3, ward: 'Ward 8 (Navrangpura & CG Road)', score: 96.5, sla: '97.8%', activeBins: 45, compliance: 'Grade A+', status: 'Exemplary' },
-    { rank: 4, ward: 'Ward 24 (Maninagar South)', score: 95.2, sla: '96.4%', activeBins: 36, compliance: 'Grade A', status: 'Optimal' },
-    { rank: 5, ward: 'Ward 14 (Chandlodiya & Ranip)', score: 94.0, sla: '95.1%', activeBins: 32, compliance: 'Grade A', status: 'Optimal' },
-    { rank: 6, ward: 'Ward 3 (Kalupur & Relief Road)', score: 91.8, sla: '93.2%', activeBins: 29, compliance: 'Grade A', status: 'Surveillance Active' },
-    { rank: 7, ward: 'Ward 30 (Naroda Industrial Phase 3)', score: 88.5, sla: '89.6%', activeBins: 26, compliance: 'Grade B+', status: 'Priority Patrol' },
-    { rank: 8, ward: 'Ward 21 (South Bopal & Ghuma)', score: 86.9, sla: '88.0%', activeBins: 24, compliance: 'Grade B', status: 'Action Required' },
-  ], []);
+  // Dynamic Fleet Operational Metrics
+  const avgFleetPayload = useMemo(() => {
+    if (!vehicles || vehicles.length === 0) return 84.5;
+    const totalPercent = vehicles.reduce((sum, v) => sum + (v.loadCapacityPercent || 0), 0);
+    return Number((totalPercent / vehicles.length).toFixed(1));
+  }, [vehicles]);
+
+  const avgFleetPayloadTons = useMemo(() => {
+    return Number(((avgFleetPayload * 14) / 100).toFixed(1));
+  }, [avgFleetPayload]);
+
+  const routeExecutionRate = useMemo(() => {
+    if (!vehicles || vehicles.length === 0) return 92.4;
+    const totalRate = vehicles.reduce((sum, v) => sum + (v.routeProgress || v.loadCapacityPercent || 85), 0);
+    return Number((totalRate / vehicles.length).toFixed(1));
+  }, [vehicles]);
+
+  const sensorHealthPercent = useMemo(() => {
+    if (!dustbins || dustbins.length === 0) return 98.6;
+    const lowBatteryOrError = dustbins.filter((b) => (b.batteryLevel || 100) < 25).length;
+    return Number((100 - (lowBatteryOrError / dustbins.length) * 100).toFixed(1));
+  }, [dustbins]);
+
+  // Dynamic MRF & Landfill Diversion Metrics
+  const dynamicMrf = useMemo(() => {
+    const truckTonnage = vehicles.reduce((sum, v) => sum + (((v.loadCapacityPercent || 35) * 14) / 100), 0);
+    const incidentTonnage = resolvedReports * 2.4;
+    const binTonnage = dustbins.reduce((sum, b) => sum + (((b.fillLevel || 0) * 0.4) / 100), 0) * 8;
+    const totalDaily = Math.round(truckTonnage * 4.2 + incidentTonnage + binTonnage + 380);
+    const compost = Math.round(totalDaily * 0.42);
+    const recyclables = Math.round(totalDaily * 0.35);
+    const rdf = Math.round(totalDaily * 0.16);
+    const diverted = compost + recyclables + rdf;
+    const diversionRate = totalDaily > 0 ? ((diverted / totalDaily) * 100).toFixed(1) : '82.4';
+
+    return {
+      totalDaily,
+      compost,
+      recyclables,
+      rdf,
+      diversionRate,
+    };
+  }, [vehicles, resolvedReports, dustbins]);
+
+  // City Sanitation Index (computed dynamically from SLA, MRF diversion, and sensor health)
+  const citySanitationIndex = useMemo(() => {
+    const calculated = (slaResolutionRate * 0.45) + (Number(dynamicMrf.diversionRate) * 0.35) + (sensorHealthPercent * 0.20);
+    return Number(calculated.toFixed(1));
+  }, [slaResolutionRate, dynamicMrf.diversionRate, sensorHealthPercent]);
+
+  // Dynamic 48 AMC Wards League Table Data
+  const wardRankings = useMemo(() => {
+    const wardKeys = [
+      'Ward 18 (Sola & Science City)',
+      'Ward 12 (Vastrapur & Bodakdev)',
+      'Ward 8 (Navrangpura & CG Road)',
+      'Ward 24 (Maninagar South)',
+      'Ward 14 (Chandlodiya & Ranip)',
+      'Ward 3 (Kalupur & Relief Road)',
+      'Ward 30 (Naroda Industrial Phase 3)',
+      'Ward 21 (South Bopal & Ghuma)',
+    ];
+
+    return wardKeys.map((wKey, idx) => {
+      const wardClean = wKey.split(' ')[1] || wKey;
+      const wardReports = reports.filter((r) => (r.ward || '').toLowerCase().includes(wardClean.toLowerCase()) || (r.location || '').toLowerCase().includes(wardClean.toLowerCase()));
+      const resolvedCount = wardReports.filter((r) => r.status === 'Resolved').length;
+      const pendingCount = wardReports.filter((r) => r.status === 'Pending Verification' || r.status === 'Pending Driver Approval' || r.status === 'Dispatched').length;
+      const wardBins = dustbins.filter((b) => (b.ward || '').toLowerCase().includes(wardClean.toLowerCase()) || (b.name || '').toLowerCase().includes(wardClean.toLowerCase()));
+      const activeBinsCount = wardBins.length > 0 ? wardBins.length : (30 + (idx * 3) % 15);
+      const avgFill = wardBins.length > 0 ? (wardBins.reduce((a, b) => a + (b.fillLevel || 0), 0) / wardBins.length) : 45;
+
+      const slaRate = wardReports.length > 0 ? Math.round((resolvedCount / wardReports.length) * 100) : Math.max(88, 99 - (idx * 1.4));
+      const score = Math.max(72.0, Math.min(99.6, Number((99.4 - (pendingCount * 3.8) - ((avgFill > 70 ? avgFill - 70 : 0) * 0.22) - (idx * 1.1)).toFixed(1))));
+      const compliance = score >= 96 ? 'Grade A+' : score >= 91 ? 'Grade A' : score >= 85 ? 'Grade B+' : 'Grade B';
+      const status = score >= 96 ? 'Exemplary' : score >= 91 ? 'Optimal' : score >= 85 ? 'Surveillance Active' : 'Action Required';
+
+      return {
+        rank: idx + 1,
+        ward: wKey,
+        score,
+        sla: `${slaRate}%`,
+        activeBins: activeBinsCount,
+        compliance,
+        status,
+        pendingReports: pendingCount,
+        resolvedReports: resolvedCount,
+      };
+    }).sort((a, b) => b.score - a.score).map((w, i) => ({ ...w, rank: i + 1 }));
+  }, [reports, dustbins]);
 
   // AMC Officer Registry
   const officerRegistry = [
@@ -283,7 +362,7 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>City Sanitation Index</span>
                       <TrendingUp size={16} color="#0ea5e9" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#38bdf8' }}>94.2%</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#38bdf8' }}>{citySanitationIndex}%</div>
                     <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Top Tier • Swachh Survekshan #1 Metro</div>
                   </div>
 
@@ -301,8 +380,8 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Active Compactor Fleet</span>
                       <Truck size={16} color="#8b5cf6" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#a78bfa' }}>10/10 Units</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>100% Operational Readiness Across Zones</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#a78bfa' }}>{activeVehiclesCount}/{vehicles.length} Units</div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Operational Readiness Across Zones</div>
                   </div>
 
                   <div className="glass-card" style={{ padding: '16px' }}>
@@ -319,8 +398,10 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Active Emergency Protocols</span>
                       <Zap size={16} color="#ec4899" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#ec4899' }}>2 Active</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Monsoon Flood Protocol & VIP Corridor</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#ec4899' }}>
+                      {Object.values(activeDirectives).filter(Boolean).length} Active
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Monsoon Flood & VIP Corridor Mandates</div>
                   </div>
                 </>
               ) : isSanitationDirector ? (
@@ -330,8 +411,8 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Daily MRF Processing Yield</span>
                       <Recycle size={16} color="#10b981" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#10b981' }}>420 Tons/day</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>82.4% Landfill Diversion (Compost + RDF)</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#10b981' }}>{dynamicMrf.totalDaily} Tons/day</div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{dynamicMrf.diversionRate}% Landfill Diversion (Compost + RDF)</div>
                   </div>
 
                   <div className="glass-card" style={{ padding: '16px' }}>
@@ -368,8 +449,8 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Fleet Operational Readiness</span>
                       <Truck size={16} color="#8b5cf6" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#a78bfa' }}>10/10 Online</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>10 Heavy Compactor Trucks Active</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#a78bfa' }}>{activeVehiclesCount}/{vehicles.length} Online</div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Heavy Compactor Trucks Active</div>
                   </div>
 
                   <div className="glass-card" style={{ padding: '16px' }}>
@@ -377,7 +458,7 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Daily Route Execution</span>
                       <Activity size={16} color="#10b981" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#10b981' }}>92.4%</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#10b981' }}>{routeExecutionRate}%</div>
                     <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Stops & Smart Bins Collected</div>
                   </div>
 
@@ -386,8 +467,8 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Average Compactor Payload</span>
                       <Gauge size={16} color="#f59e0b" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#f59e0b' }}>84.5%</div>
-                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>11.8 / 14.0 Tons Per Truck</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#f59e0b' }}>{avgFleetPayload}%</div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{avgFleetPayloadTons} / 14.0 Tons Per Truck</div>
                   </div>
 
                   <div className="glass-card" style={{ padding: '16px' }}>
@@ -395,7 +476,7 @@ export const AdminDashboardView = () => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>IoT Ultrasonic Sensor Health</span>
                       <Cpu size={16} color="#0ea5e9" />
                     </div>
-                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#38bdf8' }}>98.6%</div>
+                    <div style={{ fontSize: '26px', fontWeight: 900, fontFamily: 'monospace', margin: '6px 0', color: '#38bdf8' }}>{sensorHealthPercent}%</div>
                     <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{criticalBins} Bins Awaiting Immediate Pickup</div>
                   </div>
                 </>
@@ -700,31 +781,31 @@ export const AdminDashboardView = () => {
                 </h3>
                 <p className="card-subtitle">Daily solid waste treatment, organic composting yield, RDF fuel conversion, and Pirana landfill diversion rate</p>
               </div>
-              <span className="badge badge-active">82.4% Diversion Rate</span>
+              <span className="badge badge-active">{dynamicMrf.diversionRate}% Diversion Rate</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', padding: '18px 20px' }}>
               <div className="glass-card" style={{ padding: '16px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Total Daily Waste Collected</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: 'var(--text-primary)', margin: '6px 0' }}>510 Tons</div>
+                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: 'var(--text-primary)', margin: '6px 0' }}>{dynamicMrf.totalDaily} Tons</div>
                 <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>From all 48 municipal wards</div>
               </div>
 
               <div className="glass-card" style={{ padding: '16px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Organic Wet Waste Composting</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: '#10b981', margin: '6px 0' }}>180 Tons</div>
+                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: '#10b981', margin: '6px 0' }}>{dynamicMrf.compost} Tons</div>
                 <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Converted into municipal compost manure</div>
               </div>
 
               <div className="glass-card" style={{ padding: '16px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Dry Recyclables Segregated</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: '#0ea5e9', margin: '6px 0' }}>160 Tons</div>
+                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: '#0ea5e9', margin: '6px 0' }}>{dynamicMrf.recyclables} Tons</div>
                 <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Plastic, metal, and cardboard recovery</div>
               </div>
 
               <div className="glass-card" style={{ padding: '16px' }}>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Refuse-Derived Fuel (RDF)</div>
-                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: '#f59e0b', margin: '6px 0' }}>80 Tons</div>
+                <div style={{ fontSize: '24px', fontWeight: 900, fontFamily: 'monospace', color: '#f59e0b', margin: '6px 0' }}>{dynamicMrf.rdf} Tons</div>
                 <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Supplied to cement kilns & power plants</div>
               </div>
             </div>
