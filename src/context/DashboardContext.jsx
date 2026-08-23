@@ -1931,6 +1931,12 @@ export const DashboardProvider = ({ children }) => {
     const badgeToExclude = driverBadge || currentUser?.badgeId || 'DRV-801';
     const updatedDeclined = Array.from(new Set([...(currentRep?.declinedDrivers || []), badgeToExclude]));
 
+    try {
+      const saved = localStorage.getItem(`swaachx_declined_dispatch_ids_${badgeToExclude}`);
+      const existing = saved ? JSON.parse(saved) : [];
+      localStorage.setItem(`swaachx_declined_dispatch_ids_${badgeToExclude}`, JSON.stringify(Array.from(new Set([...existing, reportId]))));
+    } catch (e) {}
+
     const nextMatch = findNearestDriverForReport(
       {
         lat: currentRep?.coordinates?.lat || currentRep?.latitude,

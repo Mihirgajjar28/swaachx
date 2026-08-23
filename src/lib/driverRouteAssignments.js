@@ -466,42 +466,31 @@ export const getDriverAssignmentProfile = ({
 
     const sourceReports = (allReports && allReports.length > 0) ? allReports : DEFAULT_AHMEDABAD_SECTOR_REPORTS;
 
-    // 1. Pending Approval Requests specifically offered to this Driver
+    // 1. Live Pending Approval Requests specifically offered to this Driver
+    let declinedSet = new Set();
+    try {
+      const savedDeclined = localStorage.getItem(`swaachx_declined_dispatch_ids_${matchedCred.badgeId}`);
+      if (savedDeclined) declinedSet = new Set(JSON.parse(savedDeclined));
+    } catch (e) {}
+
     pendingApprovals = sourceReports
       .filter((rep) => {
-        if (rep.status === 'Resolved' || rep.status === 'Dispatched') return false;
-        if (rep.status === 'Pending Driver Approval' || (!rep.assignedDriver && rep.status !== 'Resolved' && rep.status !== 'Dispatched')) {
-          const propBadge = (rep.proposedBadge || '').toUpperCase();
-          const propDriver = (rep.proposedDriver || '').toLowerCase();
-          const myBadge = (matchedCred.badgeId || '').toUpperCase();
-          const myName = (matchedCred.name || '').toLowerCase();
-          const myVeh = (matchedVehicle.id || '').toLowerCase();
+        if (rep.status !== 'Pending Driver Approval') return false;
+        if (declinedSet.has(rep.id)) return false;
+        if ((rep.declinedDrivers || []).includes(matchedCred.badgeId)) return false;
 
-          if (propBadge && propBadge === myBadge) return true;
-          if (propDriver && (propDriver.includes(myBadge.toLowerCase()) || propDriver.includes(myName) || propDriver.includes(myVeh))) return true;
+        const propBadge = (rep.proposedBadge || '').toUpperCase();
+        const propDriver = (rep.proposedDriver || '').toLowerCase();
+        const myBadge = (matchedCred.badgeId || '').toUpperCase();
+        const myName = (matchedCred.name || '').toLowerCase();
+        const myVeh = (matchedVehicle.id || '').toLowerCase();
 
-          // Proximity GIS matching against live fleet coordinates
-          const match = findNearestDriverForReport(
-            {
-              lat: rep.coordinates?.lat || rep.latitude,
-              lng: rep.coordinates?.lng || rep.longitude,
-              ward: rep.ward,
-              location: rep.location,
-            },
-            allVehicles,
-            rep.declinedDrivers || []
-          );
-
-          if (match && match.badgeId && match.badgeId.toUpperCase() === myBadge) {
-            return true;
-          }
-
-          const loc = (rep.location || '').toLowerCase();
-          const ward = (rep.ward || '').toLowerCase();
-          const cat = (rep.category || '').toLowerCase();
-          return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw));
-        }
-        return false;
+        return (
+          propBadge === myBadge ||
+          propDriver.includes(myBadge.toLowerCase()) ||
+          propDriver.includes(myName) ||
+          propDriver.includes(myVeh)
+        );
       })
       .map((rep) => {
         if (rep.distanceKm && rep.etaMinutes) return rep;
