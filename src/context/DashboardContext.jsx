@@ -1823,21 +1823,35 @@ export const DashboardProvider = ({ children }) => {
       return updated;
     });
 
-    // Attempt delivery via Supabase Auth OTP in background if configured
-    if (isSupabaseConfigured()) {
+    // Dispatch delivery via Supabase Auth OTP in background if configured
+    if (isSupabaseConfigured() && supabase?.auth?.signInWithOtp) {
       try {
-        supabase.auth.signInWithOtp({
-          email: cleanEmail,
-          options: { shouldCreateUser: false },
-        }).catch((err) => {
-          console.warn('Supabase signInWithOtp notice:', err);
-        });
+        supabase.auth
+          .signInWithOtp({
+            email: cleanEmail,
+            options: {
+              shouldCreateUser: true,
+              data: {
+                name: name || 'Citizen',
+              },
+            },
+          })
+          .then(({ data, error }) => {
+            if (error) {
+              console.warn('Supabase signInWithOtp delivery notice:', error.message);
+            } else {
+              console.info('Supabase email OTP successfully dispatched to:', cleanEmail);
+            }
+          })
+          .catch((err) => {
+            console.warn('Supabase signInWithOtp notice:', err);
+          });
       } catch (err) {
         console.warn('Supabase OTP dispatch attempt notice:', err);
       }
     }
 
-    addToast(`🔑 Security OTP: ${generatedOtp} sent to ${cleanEmail}! Check inbox or use instant code.`, 'info');
+    addToast(`📧 Verification OTP sent to ${cleanEmail}! Please check your email inbox or use the instant code.`, 'info');
     return {
       success: true,
       otp: generatedOtp,
