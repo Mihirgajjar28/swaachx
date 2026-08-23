@@ -85,6 +85,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     if (isSuperAdmin) {
       return [
         { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard, badge: 'Level 5', description: 'City Sanitation KPIs' },
+        { id: 'incidents', label: 'Incident Tickets', icon: ClipboardList, badge: 'Incidents', description: 'City-Wide Oversight' },
         { id: 'ward-rankings', label: 'Ward Rankings', icon: BarChart3, badge: '48 Wards', description: 'Cleanliness League' },
         { id: 'directives', label: 'Directives & Protocols', icon: Zap, badge: 'Directives', description: 'Emergency Mandates' },
         { id: 'audit-logs', label: 'SBM Compliance Audit', icon: Activity, badge: 'Audits', description: 'Export Certificates' },
@@ -98,6 +99,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         { id: 'hotspots', label: 'AI Predictive Hotspots', icon: Flame, badge: 'AI ML', description: 'Surveillance Cameras' },
         { id: 'quests-approval', label: 'Community Quests', icon: Users, badge: 'Civic', description: 'Grants & Certification' },
         { id: 'mrf', label: 'MRF & Diversion', icon: Recycle, badge: 'MRF', description: 'Waste Treatment Yield' },
+        { id: 'audit-logs', label: 'Directorate Audits', icon: Activity, badge: 'Logs', description: 'SWM Action Logs' },
       ];
     }
     // Operations Chief (ADM-AMC-003)
@@ -107,6 +109,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       { id: 'vehicles', label: 'Trucks & Diagnostics', icon: Truck, badge: '10 Trucks', description: 'Payload & Fuel Health' },
       { id: 'dustbins', label: 'Smart IoT Bins', icon: Trash2, badge: 'Sensors', description: 'Calibration & Battery' },
       { id: 'dispatch-overrides', label: 'Dispatch Overrides', icon: Zap, badge: 'Override', description: 'Emergency Rerouting' },
+      { id: 'audit-logs', label: 'Fleet Logs', icon: Activity, badge: 'Telemetry', description: 'Depot Dispatch Records' },
     ];
   }, [isSuperAdmin, isSanitationDirector, isOperationsChief]);
 
