@@ -129,19 +129,61 @@ export const AdminDashboardView = () => {
 
   // Driver & Vehicle Registration Modal (Chief Fleet Operations Officer ADM-AMC-003)
   const [isDriverRegisterOpen, setIsDriverRegisterOpen] = useState(false);
+  const nextDriverIndex = vehicles.length + 1;
+  const nextBadgeSuffix = nextDriverIndex < 10 ? '0' + nextDriverIndex : nextDriverIndex;
+
   const [driverFormData, setDriverFormData] = useState({
     driverName: '',
     driverPhone: '',
-    driverBadge: '',
+    driverBadge: `DRV-8${nextBadgeSuffix}`,
     driverEmail: '',
-    driverPin: '',
-    vehiclePlate: '',
+    driverPin: `FLT-8${nextBadgeSuffix}-AUTH`,
+    vehiclePlate: `GJ-01-FL-8${nextBadgeSuffix}`,
     vehicleType: 'Heavy Compactor (14T)',
-    assignedRoute: 'Route N11 - North-West SG Highway & Sola Corridor',
+    assignedRoute: `Route N${nextDriverIndex} - North-West SG Highway & Sola Corridor`,
     wardSector: 'North-West Zone (Sola & Gota)',
     initialFuel: 95,
     initialLoad: 10,
   });
+
+  // Automatically generate unique email, badge ID, PIN, and vehicle plate from driver's full name
+  const handleDriverNameChange = (name) => {
+    const cleanNameParts = name.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const nameSlug = cleanNameParts.length >= 2 ? `${cleanNameParts[0]}.${cleanNameParts[cleanNameParts.length - 1]}` : (cleanNameParts[0] || 'driver');
+    const autoEmail = name.trim() ? `${nameSlug}.${nextBadgeSuffix}@wastefleet.org` : '';
+    const autoBadge = `DRV-8${nextBadgeSuffix}`;
+    const autoPin = `FLT-8${nextBadgeSuffix}-AUTH`;
+    const autoPlate = `GJ-01-FL-8${nextBadgeSuffix}`;
+
+    setDriverFormData((prev) => ({
+      ...prev,
+      driverName: name,
+      driverBadge: prev.driverBadge && prev.driverBadge !== `DRV-8${nextBadgeSuffix}` ? prev.driverBadge : autoBadge,
+      driverEmail: autoEmail,
+      driverPin: prev.driverPin && prev.driverPin !== `FLT-8${nextBadgeSuffix}-AUTH` ? prev.driverPin : autoPin,
+      vehiclePlate: prev.vehiclePlate && prev.vehiclePlate !== `GJ-01-FL-8${nextBadgeSuffix}` ? prev.vehiclePlate : autoPlate,
+    }));
+  };
+
+  const openDriverRegisterModal = () => {
+    const autoBadge = `DRV-8${nextBadgeSuffix}`;
+    const autoPin = `FLT-8${nextBadgeSuffix}-AUTH`;
+    const autoPlate = `GJ-01-FL-8${nextBadgeSuffix}`;
+    setDriverFormData({
+      driverName: '',
+      driverPhone: '',
+      driverBadge: autoBadge,
+      driverEmail: '',
+      driverPin: autoPin,
+      vehiclePlate: autoPlate,
+      vehicleType: 'Heavy Compactor (14T)',
+      assignedRoute: `Route N${nextDriverIndex} - North-West SG Highway & Sola Corridor`,
+      wardSector: 'North-West Zone (Sola & Gota)',
+      initialFuel: 95,
+      initialLoad: 10,
+    });
+    setIsDriverRegisterOpen(true);
+  };
 
   const handleDriverRegisterSubmit = (e) => {
     e.preventDefault();
@@ -168,12 +210,12 @@ export const AdminDashboardView = () => {
       setDriverFormData({
         driverName: '',
         driverPhone: '',
-        driverBadge: '',
+        driverBadge: `DRV-8${vehicles.length + 2 < 10 ? '0' + (vehicles.length + 2) : vehicles.length + 2}`,
         driverEmail: '',
-        driverPin: '',
-        vehiclePlate: '',
+        driverPin: `FLT-8${vehicles.length + 2 < 10 ? '0' + (vehicles.length + 2) : vehicles.length + 2}-AUTH`,
+        vehiclePlate: `GJ-01-FL-8${vehicles.length + 2 < 10 ? '0' + (vehicles.length + 2) : vehicles.length + 2}`,
         vehicleType: 'Heavy Compactor (14T)',
-        assignedRoute: 'Route N11 - North-West SG Highway & Sola Corridor',
+        assignedRoute: `Route N${vehicles.length + 2} - North-West SG Highway & Sola Corridor`,
         wardSector: 'North-West Zone (Sola & Gota)',
         initialFuel: 95,
         initialLoad: 10,
@@ -1153,7 +1195,7 @@ export const AdminDashboardView = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span className="badge badge-active">{vehicles.length} Trucks Active</span>
                 <button
-                  onClick={() => setIsDriverRegisterOpen(true)}
+                  onClick={openDriverRegisterModal}
                   className="btn btn-primary btn-sm"
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 800, background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none', color: '#fff' }}
                 >
@@ -1651,7 +1693,7 @@ export const AdminDashboardView = () => {
                       required
                       placeholder="e.g. Kailash Solanki"
                       value={driverFormData.driverName}
-                      onChange={(e) => setDriverFormData({ ...driverFormData, driverName: e.target.value })}
+                      onChange={(e) => handleDriverNameChange(e.target.value)}
                       style={{
                         width: '100%',
                         padding: '9px 12px',
@@ -1691,12 +1733,15 @@ export const AdminDashboardView = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Driver Badge Number
-                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                        Driver Badge ID
+                      </label>
+                      <span style={{ fontSize: '9.5px', color: '#a78bfa', fontWeight: 700 }}>⚡ Auto-Assigned</span>
+                    </div>
                     <input
                       type="text"
-                      placeholder={`e.g. DRV-8${vehicles.length + 1 < 10 ? '0' + (vehicles.length + 1) : vehicles.length + 1}`}
+                      placeholder={`e.g. DRV-8${nextBadgeSuffix}`}
                       value={driverFormData.driverBadge}
                       onChange={(e) => setDriverFormData({ ...driverFormData, driverBadge: e.target.value })}
                       style={{
@@ -1705,7 +1750,8 @@ export const AdminDashboardView = () => {
                         borderRadius: '8px',
                         border: '1px solid #334155',
                         background: '#1e293b',
-                        color: '#ffffff',
+                        color: '#a78bfa',
+                        fontWeight: 700,
                         fontSize: '12.5px',
                         outline: 'none',
                         fontFamily: 'monospace',
@@ -1714,12 +1760,15 @@ export const AdminDashboardView = () => {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Driver Fleet Email
-                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                        Unique Fleet Email
+                      </label>
+                      <span style={{ fontSize: '9.5px', color: '#38bdf8', fontWeight: 700 }}>⚡ Generated from Name</span>
+                    </div>
                     <input
                       type="email"
-                      placeholder="e.g. kailash.s@wastefleet.org"
+                      placeholder="e.g. kailash.solanki.811@wastefleet.org"
                       value={driverFormData.driverEmail}
                       onChange={(e) => setDriverFormData({ ...driverFormData, driverEmail: e.target.value })}
                       style={{
@@ -1728,7 +1777,7 @@ export const AdminDashboardView = () => {
                         borderRadius: '8px',
                         border: '1px solid #334155',
                         background: '#1e293b',
-                        color: '#ffffff',
+                        color: '#38bdf8',
                         fontSize: '12.5px',
                         outline: 'none',
                       }}
@@ -1738,12 +1787,15 @@ export const AdminDashboardView = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Login Security PIN / Password
-                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                        Security PIN / Password
+                      </label>
+                      <span style={{ fontSize: '9.5px', color: '#34d399', fontWeight: 700 }}>⚡ Auto-Key</span>
+                    </div>
                     <input
                       type="text"
-                      placeholder="e.g. FLT-811-AUTH"
+                      placeholder={`e.g. FLT-8${nextBadgeSuffix}-AUTH`}
                       value={driverFormData.driverPin}
                       onChange={(e) => setDriverFormData({ ...driverFormData, driverPin: e.target.value })}
                       style={{
@@ -1752,7 +1804,8 @@ export const AdminDashboardView = () => {
                         borderRadius: '8px',
                         border: '1px solid #334155',
                         background: '#1e293b',
-                        color: '#ffffff',
+                        color: '#34d399',
+                        fontWeight: 700,
                         fontSize: '12.5px',
                         outline: 'none',
                         fontFamily: 'monospace',
@@ -1761,12 +1814,15 @@ export const AdminDashboardView = () => {
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1', marginBottom: '5px' }}>
-                      Vehicle Registration Plate
-                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
+                      <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#cbd5e1' }}>
+                        Vehicle License Plate
+                      </label>
+                      <span style={{ fontSize: '9.5px', color: '#fbbf24', fontWeight: 700 }}>⚡ Auto-Assigned</span>
+                    </div>
                     <input
                       type="text"
-                      placeholder={`e.g. GJ-01-FL-${1000 + vehicles.length + 1}`}
+                      placeholder={`e.g. GJ-01-FL-8${nextBadgeSuffix}`}
                       value={driverFormData.vehiclePlate}
                       onChange={(e) => setDriverFormData({ ...driverFormData, vehiclePlate: e.target.value })}
                       style={{
@@ -1775,7 +1831,8 @@ export const AdminDashboardView = () => {
                         borderRadius: '8px',
                         border: '1px solid #334155',
                         background: '#1e293b',
-                        color: '#ffffff',
+                        color: '#fbbf24',
+                        fontWeight: 700,
                         fontSize: '12.5px',
                         outline: 'none',
                         fontFamily: 'monospace',

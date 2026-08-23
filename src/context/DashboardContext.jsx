@@ -2120,12 +2120,14 @@ export const DashboardProvider = ({ children }) => {
     coordinates = { lat: 23.0784, lng: 72.5441 },
   }) => {
     const nextIndex = vehicles.length + 1;
-    const vehicleId = `TRK-AMD-8${nextIndex < 10 ? '0' + nextIndex : nextIndex}`;
-    const badge = (driverBadge || `DRV-8${nextIndex < 10 ? '0' + nextIndex : nextIndex}`).toUpperCase().trim();
+    const badgeSuffix = nextIndex < 10 ? '0' + nextIndex : nextIndex;
     const cleanName = (driverName || 'Municipal Driver').trim();
-    const email = (driverEmail || `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@wastefleet.org`).toLowerCase().trim();
-    const plate = (vehiclePlate || `GJ-01-FL-${1000 + nextIndex}`).toUpperCase().trim();
-    const pin = (driverPin || `FLT-${badge}-AUTH`).trim();
+    const nameParts = cleanName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const nameSlug = nameParts.length >= 2 ? `${nameParts[0]}.${nameParts[nameParts.length - 1]}` : (nameParts[0] || 'driver');
+    const email = (driverEmail || `${nameSlug}.${badgeSuffix}@wastefleet.org`).toLowerCase().trim();
+    const badge = (driverBadge || `DRV-8${badgeSuffix}`).toUpperCase().trim();
+    const plate = (vehiclePlate || `GJ-01-FL-8${badgeSuffix}`).toUpperCase().trim();
+    const pin = (driverPin || `FLT-8${badgeSuffix}-AUTH`).trim();
     const cleanPhone = (driverPhone || `+91 9825${Math.floor(100000 + Math.random() * 900000)}`).trim();
 
     const newVehicle = {
