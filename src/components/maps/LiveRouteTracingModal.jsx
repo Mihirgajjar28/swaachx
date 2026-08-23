@@ -13,9 +13,6 @@ import {
   Gauge,
   ExternalLink,
   CheckCircle2,
-  Play,
-  Pause,
-  RotateCcw,
 } from 'lucide-react';
 
 /**
@@ -342,17 +339,19 @@ export const LiveRouteTracingModal = ({
                 <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                   {isDriverMode ? 'Turn-by-Turn Route Navigation' : 'Live Real-Time Truck Tracing'}
                 </h3>
-                <span
-                  className="badge"
-                  style={{
-                    background: isArrived ? 'rgba(16, 185, 129, 0.2)' : 'rgba(14, 165, 233, 0.2)',
-                    color: isArrived ? 'var(--accent-green, #10b981)' : 'var(--accent-cyan, #0ea5e9)',
-                    fontWeight: 700,
-                    fontSize: '10px',
-                  }}
-                >
-                  {isArrived ? '✓ Arrived on Site' : '⚡ GPS Transponder Active'}
-                </span>
+                {isArrived && (
+                  <span
+                    className="badge"
+                    style={{
+                      background: 'rgba(16, 185, 129, 0.2)',
+                      color: 'var(--accent-green, #10b981)',
+                      fontWeight: 700,
+                      fontSize: '10px',
+                    }}
+                  >
+                    ✓ Arrived on Site
+                  </span>
+                )}
               </div>
               <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
                 {targetTitle} • {targetLocation}
@@ -511,60 +510,6 @@ export const LiveRouteTracingModal = ({
               </Popup>
             </Marker>
           </MapContainer>
-
-          {/* Floating Controls Overlay */}
-          <div
-            style={{
-              position: 'absolute',
-              bottom: '12px',
-              left: '12px',
-              zIndex: 1000,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(15, 23, 42, 0.85)',
-              backdropFilter: 'blur(6px)',
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-            }}
-          >
-            <button
-              onClick={() => setIsSimulating(!isSimulating)}
-              style={{
-                background: isSimulating ? 'var(--primary-600)' : 'rgba(255, 255, 255, 0.2)',
-                color: '#ffffff',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              {isSimulating ? <Pause size={12} /> : <Play size={12} />}
-              <span>{isSimulating ? 'Live Transponder: Active' : 'Paused'}</span>
-            </button>
-
-            <button
-              onClick={() => setStepIndex(0)}
-              title="Reset simulation"
-              style={{
-                background: 'transparent',
-                color: '#ffffff',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '4px',
-                display: 'flex',
-                alignItems: 'center',
-              }}
-            >
-              <RotateCcw size={13} />
-            </button>
-          </div>
         </div>
 
         {/* Modal Footer Controls & Driver Contact */}
