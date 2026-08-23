@@ -262,39 +262,6 @@ export const AdminDashboardView = () => {
     });
   };
 
-  // Sub-tabs specific to current admin
-  const currentSubTabs = useMemo(() => {
-    if (isSuperAdmin) {
-      return [
-        { id: 'overview', label: 'Executive Overview', icon: BarChart3 },
-        { id: 'incidents', label: `Incident Tickets (${pendingReports + dispatchedReports})`, icon: FileText },
-        { id: 'ward-rankings', label: 'Ward Rankings & League', icon: TrendingUp },
-        { id: 'directives', label: 'Emergency Directives', icon: Zap },
-        { id: 'audit-logs', label: 'SBM Compliance Audit', icon: Activity },
-        { id: 'officers', label: 'Officer Role Registry', icon: Shield },
-      ];
-    }
-    if (isSanitationDirector) {
-      return [
-        { id: 'overview', label: 'Directorate Overview', icon: BarChart3 },
-        { id: 'incidents', label: `Incident Tickets & Grievances (${pendingReports + dispatchedReports})`, icon: FileText },
-        { id: 'hotspots', label: `AI Predictive Hotspots (${hotspots.length})`, icon: Flame },
-        { id: 'quests-approval', label: `Community Quests (${communityQuests.length})`, icon: Users },
-        { id: 'mrf', label: 'MRF & Waste Diversion', icon: Recycle },
-        { id: 'audit-logs', label: 'Directorate Audit Logs', icon: Activity },
-      ];
-    }
-    // Fleet Operations Chief
-    return [
-      { id: 'overview', label: 'Fleet Overview', icon: BarChart3 },
-      { id: 'gis-map', label: 'Live Fleet GIS Grid', icon: Layers },
-      { id: 'fleet', label: `10 Compactor Trucks (${vehicles.length})`, icon: Truck },
-      { id: 'dustbins', label: `Smart IoT Sensors (${dustbins.length})`, icon: Trash2 },
-      { id: 'dispatch-overrides', label: 'Dispatch Overrides', icon: Zap },
-      { id: 'audit-logs', label: 'Fleet Logs', icon: Activity },
-    ];
-  }, [isSuperAdmin, isSanitationDirector, pendingReports, dispatchedReports, hotspots.length, communityQuests.length, vehicles.length, dustbins.length]);
-
   return (
     <DesktopOnlyGuard>
       <div className="animate-fade-in-up" style={{ paddingBottom: '40px' }}>
@@ -387,50 +354,6 @@ export const AdminDashboardView = () => {
                 <span>Exit Portal</span>
               </button>
             </div>
-          </div>
-
-          {/* Sub-Tabs Selector */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginTop: '18px',
-              paddingTop: '14px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              overflowX: 'auto',
-            }}
-          >
-            {currentSubTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = adminTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setAdminTab(tab.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    background: isActive
-                      ? (isSuperAdmin ? '#0ea5e9' : isSanitationDirector ? '#10b981' : '#8b5cf6')
-                      : 'rgba(255, 255, 255, 0.06)',
-                    color: isActive ? '#ffffff' : '#cbd5e1',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <Icon size={14} />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
           </div>
         </div>
 
