@@ -387,59 +387,6 @@ export const AuthView = () => {
                 We've sent a 6-digit OTP verification code to <br />
                 <strong style={{ color: 'var(--text-primary)' }}>{email}</strong>
               </p>
-
-              {generatedOtpHint && (
-                <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                  <div
-                    style={{
-                      background: 'rgba(5, 150, 105, 0.08)',
-                      border: '1.5px dashed var(--primary-500)',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: '10px 16px',
-                      width: '100%',
-                      maxWidth: '340px',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                      🔑 Your 6-Digit Verification Code
-                    </div>
-                    <div style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '6px', color: 'var(--primary-600)', fontFamily: 'var(--font-mono)' }}>
-                      {generatedOtpHint}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setOtpCode(generatedOtpHint);
-                        if (errors.otp) setErrors((prev) => ({ ...prev, otp: null }));
-                      }}
-                      style={{
-                        marginTop: '8px',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 14px',
-                        borderRadius: '99px',
-                        background: 'var(--primary-500)',
-                        border: 'none',
-                        color: '#ffffff',
-                        fontSize: '11px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px var(--primary-glow)',
-                        transition: 'all 0.15s ease',
-                      }}
-                      title="Click to autofill OTP"
-                    >
-                      <Sparkles size={13} />
-                      <span>Click to Autofill Code</span>
-                    </button>
-                  </div>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center' }}>
-                    Tip: If external email is delayed by spam filters, click the instant code above to register immediately.
-                  </span>
-                </div>
-              )}
             </div>
 
             <form onSubmit={handleVerifyOtpAndRegister}>
