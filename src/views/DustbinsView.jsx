@@ -92,41 +92,16 @@ export const DustbinsView = () => {
   };
 
   // Trigger browser GPS locator and route to closest bin directly on map
-  const handleDetectGPS = async () => {
-    if (!navigator.geolocation) {
-      addToast('Geolocation not supported by browser. Locating closest city dustbin.', 'warning');
-      const nearest = await locateNearestDustbin();
-      if (nearest) setIsNavigating(true);
-      return;
+  const handleDetectGPS = () => {
+    setIsNavigating(true);
+    const result = locateNearestDustbin();
+    if (result && typeof result.then === 'function') {
+      result.then((bin) => {
+        if (bin) setSelectedDustbin(bin);
+      });
+    } else if (dustbins && dustbins.length > 0) {
+      setSelectedDustbin(dustbins[0]);
     }
-
-    setIsDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const coords = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          address: 'My GPS Location',
-        };
-        setUserLocation(coords);
-        setIsDetectingLocation(false);
-        const nearest = await locateNearestDustbin(coords);
-        if (nearest) {
-          setIsNavigating(true);
-          addToast(`Located nearest bin: ${nearest.name || 'Dustbin'}`, 'success');
-        }
-      },
-      async (err) => {
-        console.warn('Geolocation error:', err);
-        setIsDetectingLocation(false);
-        const nearest = await locateNearestDustbin();
-        if (nearest) {
-          setIsNavigating(true);
-          addToast(`Located nearest bin: ${nearest.name || 'Dustbin'}`, 'success');
-        }
-      },
-      { timeout: 8000 }
-    );
   };
 
   const handleStopNavigation = () => {
@@ -304,11 +279,10 @@ export const DustbinsView = () => {
         </div>
       )}
 
-      {/* 3. Full-Width Map with Direct Dustbin Locations & Floating Direct Pin Selector */}
+      {/* 3. Full-Width Map with Direct Dustbin Locations */}
       <div
         className="glass-card"
         style={{
-          position: 'relative',
           height: 'calc(100vh - 210px)',
           minHeight: '560px',
           width: '100%',
@@ -328,70 +302,6 @@ export const DustbinsView = () => {
           onStartRoute={(bin) => handleSelectAndRoute(bin)}
           style={{ height: '100%', width: '100%' }}
         />
-
-        {/* Floating Direct Pin Quick Bar on Map */}
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '16px',
-            left: '16px',
-            right: '16px',
-            zIndex: 999,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            overflowX: 'auto',
-            padding: '8px 12px',
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 6px 20px rgba(0, 0, 0, 0.12)',
-            border: '1px solid var(--border-subtle)',
-          }}
-        >
-          <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <MapPin size={12} color="#10b981" /> Public Bins:
-          </div>
-          {filteredDustbins.map((bin) => {
-            const isSelected = selectedDustbin?.id === bin.id;
-            return (
-              <button
-                key={bin.id}
-                onClick={() => handleSelectAndRoute(bin)}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-md)',
-                  background: isSelected ? '#10b981' : 'var(--bg-surface)',
-                  color: isSelected ? '#ffffff' : 'var(--text-primary)',
-                  border: isSelected ? '1px solid #10b981' : '1px solid var(--border-subtle)',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  whiteSpace: 'nowrap',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  boxShadow: isSelected ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <span>{bin.name}</span>
-                <span
-                  style={{
-                    fontSize: '9px',
-                    padding: '1px 4px',
-                    borderRadius: '4px',
-                    background: isSelected ? 'rgba(255,255,255,0.25)' : 'rgba(16, 185, 129, 0.12)',
-                    color: isSelected ? '#ffffff' : '#10b981',
-                    fontWeight: 800,
-                  }}
-                >
-                  {bin.fillLevel}%
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </div>
     </div>
   );
