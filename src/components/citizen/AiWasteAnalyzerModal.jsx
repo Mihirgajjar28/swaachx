@@ -134,18 +134,19 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
 
   const modalContent = (
     <div
+      className="modal-backdrop animate-fade-in"
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 99999,
-        background: 'rgba(15, 23, 42, 0.65)',
+        background: 'rgba(15, 23, 42, 0.7)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
-        animation: 'fadeIn 0.2s ease-out',
+        padding: '10px 8px',
+        overflow: 'hidden',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -155,34 +156,36 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
         className="glass-card animate-scale-in"
         style={{
           width: '100%',
-          maxWidth: '680px',
-          maxHeight: '90vh',
+          maxWidth: '640px',
+          maxHeight: '94vh',
           display: 'flex',
           flexDirection: 'column',
           borderRadius: 'var(--radius-xl)',
           background: 'var(--bg-surface)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.35)',
           overflow: 'hidden',
+          border: '1px solid var(--border-subtle)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div
           style={{
-            padding: '16px 20px',
+            padding: '12px 16px',
             borderBottom: '1px solid var(--border-subtle)',
             background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(2, 132, 199, 0.05) 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            gap: '12px',
+            gap: '10px',
+            flexShrink: 0,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
             <div
               style={{
-                width: '36px',
-                height: '36px',
+                width: '34px',
+                height: '34px',
                 borderRadius: '10px',
                 background: 'linear-gradient(135deg, var(--primary-500) 0%, #0284c7 100%)',
                 color: '#ffffff',
@@ -190,41 +193,47 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+                flexShrink: 0,
               }}
             >
-              <Sparkles size={18} />
+              <Sparkles size={17} />
             </div>
-            <div>
-              <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
                 Know Your Waste
               </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                Upload waste photos for instant segregation, DIY reuse ideas & carbon savings
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.3, marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                Upload waste photos for instant segregation & DIY reuse ideas
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <button
               type="button"
               onClick={onClose}
               style={{
-                padding: '6px',
-                borderRadius: 'var(--radius-md)',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
                 color: 'var(--text-muted)',
-                background: 'transparent',
-                border: 'none',
+                background: 'var(--bg-surface-elevated)',
+                border: '1px solid var(--border-subtle)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 cursor: 'pointer',
+                transition: 'all 0.15s ease',
               }}
               title="Close"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
         </div>
 
         {/* Modal Scrollable Body */}
-        <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+        <div style={{ padding: '16px 14px', overflowY: 'auto', flex: 1, WebkitOverflowScrolling: 'touch' }}>
 
           {/* Photo Upload & Dropzone Area */}
           {!imagePreview ? (
@@ -233,35 +242,35 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
                 className="file-dropzone"
                 onClick={() => fileInputRef.current?.click()}
                 style={{
-                  padding: '28px 16px',
+                  padding: '20px 14px',
                   borderRadius: 'var(--radius-lg)',
                   border: '2px dashed var(--border-medium)',
                   background: 'var(--bg-surface-elevated)',
                   cursor: 'pointer',
                   textAlign: 'center',
-                  marginBottom: '16px',
+                  marginBottom: '14px',
                   transition: 'all 0.2s ease',
                 }}
               >
                 <div
                   style={{
-                    width: '48px',
-                    height: '48px',
+                    width: '42px',
+                    height: '42px',
                     borderRadius: '50%',
                     background: 'rgba(5, 150, 105, 0.1)',
                     color: 'var(--primary-600)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    margin: '0 auto 10px',
+                    margin: '0 auto 8px',
                   }}
                 >
-                  <UploadCloud size={24} />
+                  <UploadCloud size={22} />
                 </div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '3px' }}>
                   Click to Upload or Drag & Drop Waste Photo
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                   Supports PNG, JPG, JPEG or Camera Snaps (Max 10MB)
                 </div>
                 <input
@@ -281,8 +290,8 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                    gap: '8px',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                    gap: '6px',
                   }}
                 >
                   {PRESET_WASTE_SAMPLES.map((sample, idx) => (
@@ -304,12 +313,12 @@ export const AiWasteAnalyzerModal = ({ isOpen, onClose }) => {
                       onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--primary-400)')}
                       onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
                     >
-                      <span style={{ fontSize: '18px' }}>{sample.icon}</span>
-                      <div style={{ overflow: 'hidden' }}>
-                        <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
+                      <span style={{ fontSize: '18px', flexShrink: 0 }}>{sample.icon}</span>
+                      <div style={{ overflow: 'hidden', minWidth: 0 }}>
+                        <div style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>
                           {sample.name}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{sample.category}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{sample.category}</div>
                       </div>
                     </button>
                   ))}

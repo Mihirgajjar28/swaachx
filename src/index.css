@@ -1507,3 +1507,25 @@ input::-ms-clear {
   }
 }
 
+/* ==========================================================================
+   Mobile Modal & Responsive Dialog Optimization
+   ========================================================================== */
+@media (max-width: 640px) {
+  .modal-backdrop {
+    padding: 8px !important;
+    align-items: center !important;
+  }
+
+  .modal-backdrop > div {
+    max-height: 94vh !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: var(--radius-xl) !important;
+  }
+
+  .file-dropzone {
+    padding: 16px 12px !important;
+  }
+}
+
+
