@@ -47,7 +47,7 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       id: 'quests',
       label: 'Community Quests',
       icon: Users,
-      badge: '100+ ⭐',
+      badge: null,
       description: 'Neighborhood Cleanup Drives',
     },
   ];
@@ -84,32 +84,32 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const adminNavItems = useMemo(() => {
     if (isSuperAdmin) {
       return [
-        { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard, badge: 'Level 5', description: 'City Sanitation KPIs' },
-        { id: 'incidents', label: 'Incident Tickets', icon: ClipboardList, badge: 'Incidents', description: 'City-Wide Oversight' },
-        { id: 'ward-rankings', label: 'Ward Rankings', icon: BarChart3, badge: '48 Wards', description: 'Cleanliness League' },
-        { id: 'directives', label: 'Directives & Protocols', icon: Zap, badge: 'Directives', description: 'Emergency Mandates' },
-        { id: 'audit-logs', label: 'SBM Compliance Audit', icon: Activity, badge: 'Audits', description: 'Export Certificates' },
-        { id: 'officers', label: 'Officer Registry', icon: Shield, badge: 'Clearance', description: 'Role Provisioning' },
+        { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard, badge: null, description: 'City Sanitation KPIs' },
+        { id: 'incidents', label: 'Incident Tickets', icon: ClipboardList, badge: null, description: 'City-Wide Oversight' },
+        { id: 'ward-rankings', label: 'Ward Rankings', icon: BarChart3, badge: null, description: 'Cleanliness League' },
+        { id: 'directives', label: 'Directives & Protocols', icon: Zap, badge: null, description: 'Emergency Mandates' },
+        { id: 'audit-logs', label: 'SBM Compliance Audit', icon: Activity, badge: null, description: 'Export Certificates' },
+        { id: 'officers', label: 'Officer Registry', icon: Shield, badge: null, description: 'Role Provisioning' },
       ];
     }
     if (isSanitationDirector) {
       return [
-        { id: 'dashboard', label: 'Sanitation Directorate', icon: LayoutDashboard, badge: 'Level 4', description: 'Department Overview' },
-        { id: 'incidents', label: 'Incident & Grievances', icon: ClipboardList, badge: 'Tickets', description: 'Dispute Arbitration & Fines' },
-        { id: 'hotspots', label: 'Predictive Hotspots', icon: Flame, badge: 'Hotspots', description: 'Surveillance & Surge Patrols' },
-        { id: 'quests-approval', label: 'Community Quests', icon: Users, badge: 'Civic', description: 'Grants & Certification' },
-        { id: 'mrf', label: 'MRF & Diversion', icon: Recycle, badge: 'MRF', description: 'Waste Treatment Yield' },
-        { id: 'audit-logs', label: 'Directorate Audits', icon: Activity, badge: 'Logs', description: 'SWM Action Logs' },
+        { id: 'dashboard', label: 'Sanitation Directorate', icon: LayoutDashboard, badge: null, description: 'Department Overview' },
+        { id: 'incidents', label: 'Incident & Grievances', icon: ClipboardList, badge: null, description: 'Dispute Arbitration & Fines' },
+        { id: 'hotspots', label: 'Predictive Hotspots', icon: Flame, badge: null, description: 'Surveillance & Surge Patrols' },
+        { id: 'quests-approval', label: 'Community Quests', icon: Users, badge: null, description: 'Grants & Certification' },
+        { id: 'mrf', label: 'MRF & Diversion', icon: Recycle, badge: null, description: 'Waste Treatment Yield' },
+        { id: 'audit-logs', label: 'Directorate Audits', icon: Activity, badge: null, description: 'SWM Action Logs' },
       ];
     }
     // Operations Chief (ADM-AMC-003)
     return [
-      { id: 'dashboard', label: 'Fleet Operations', icon: LayoutDashboard, badge: 'North/West', description: 'Logistics Command' },
-      { id: 'gis-map', label: 'Live Fleet GIS Grid', icon: Compass, badge: 'Live GPS', description: '10 Trucks Telemetry' },
-      { id: 'vehicles', label: 'Trucks & Diagnostics', icon: Truck, badge: '10 Trucks', description: 'Payload & Fuel Health' },
-      { id: 'dustbins', label: 'Smart IoT Bins', icon: Trash2, badge: 'Sensors', description: 'Calibration & Battery' },
-      { id: 'dispatch-overrides', label: 'Dispatch Overrides', icon: Zap, badge: 'Override', description: 'Emergency Rerouting' },
-      { id: 'audit-logs', label: 'Fleet Logs', icon: Activity, badge: 'Telemetry', description: 'Depot Dispatch Records' },
+      { id: 'dashboard', label: 'Fleet Operations', icon: LayoutDashboard, badge: null, description: 'Logistics Command' },
+      { id: 'gis-map', label: 'Live Fleet GIS Grid', icon: Compass, badge: null, description: '10 Trucks Telemetry' },
+      { id: 'vehicles', label: 'Trucks & Diagnostics', icon: Truck, badge: null, description: 'Payload & Fuel Health' },
+      { id: 'dustbins', label: 'Smart IoT Bins', icon: Trash2, badge: null, description: 'Sensors & Calibration' },
+      { id: 'dispatch-overrides', label: 'Dispatch Overrides', icon: Zap, badge: null, description: 'Emergency Rerouting' },
+      { id: 'audit-logs', label: 'Fleet Logs', icon: Activity, badge: null, description: 'Depot Dispatch Records' },
     ];
   }, [isSuperAdmin, isSanitationDirector, isOperationsChief]);
 
@@ -244,22 +244,6 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                     {item.description}
                   </div>
                 </div>
-
-                {item.badge !== null && (
-                  <span
-                    className="animate-check-pop"
-                    style={{
-                      padding: '2px 6px',
-                      borderRadius: '99px',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      background: 'var(--primary-500)',
-                      color: '#ffffff',
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
               </button>
             );
           })}
