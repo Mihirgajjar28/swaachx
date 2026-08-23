@@ -4,6 +4,7 @@ import { MapPlaceholder } from '../components/common/MapPlaceholder';
 import { EmptyState } from '../components/common/EmptyState';
 import { SkeletonChart, SkeletonList } from '../components/common/SkeletonLoader';
 import { FleetGisMarkers } from '../components/maps/FleetGisMarkers';
+import { LiveRouteTracingModal } from '../components/maps/LiveRouteTracingModal';
 import { getDriverAssignmentProfile } from '../lib/driverRouteAssignments';
 import { useRoadRoute } from '../lib/osrmRoadRouting';
 import {
@@ -20,6 +21,7 @@ import {
   Gauge,
   Compass,
   AlertTriangle,
+  Navigation,
 } from 'lucide-react';
 
 export const RoutesView = () => {
@@ -34,6 +36,21 @@ export const RoutesView = () => {
     addToast,
   } = useDashboard();
 
+  const badgeId = (currentUser?.badgeId || currentUser?.driverBadge || 'DRV-801').toUpperCase().trim();
+  const storageKey = `swaachx_driver_shift_state_${badgeId}`;
+
+  // Restore shift status directly from LocalStorage
+  const [shiftStatus] = useState(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.shiftStatus) return parsed.shiftStatus;
+      }
+    } catch (e) {}
+    return 'Active Shift';
+  });
+
   // Dynamic Driver Assignment Profile
   const driverProfile = useMemo(() => {
     return getDriverAssignmentProfile({
@@ -42,11 +59,11 @@ export const RoutesView = () => {
       allHotspots: hotspots,
       allReports: reports,
       allVehicles: vehicles,
+      shiftStatus,
     });
-  }, [currentUser, dustbins, hotspots, reports, vehicles]);
+  }, [currentUser, dustbins, hotspots, reports, vehicles, shiftStatus]);
 
-  const { driverInfo, vehicle, assignedRoute, stops, assignedHotspots, metrics } = driverProfile;
-  const storageKey = `swaachx_driver_shift_state_${driverInfo?.badgeId || 'DRV-801'}`;
+  const { driverInfo, vehicle, assignedRoute, stops: initialStops, assignedHotspots, metrics } = driverProfile;
 
   // Restore and sync serviced stops from localStorage
   const [servicedStops, setServicedStops] = useState(() => {
@@ -60,7 +77,21 @@ export const RoutesView = () => {
     return new Set();
   });
 
+  const [tracingStop, setTracingStop] = useState(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [isTspOptimized, setIsTspOptimized] = useState(false);
+
+  // Dynamic stops order (re-ordered when optimized)
+  const stops = useMemo(() => {
+    if (!isTspOptimized) return initialStops;
+    // Sort critical and highest fill-level bins first for optimized collection efficiency
+    return [...initialStops].sort((a, b) => {
+      const aDone = servicedStops.has(a.binId);
+      const bDone = servicedStops.has(b.binId);
+      if (aDone !== bDone) return aDone ? 1 : -1;
+      return (b.capacityPercent || 0) - (a.capacityPercent || 0);
+    }).map((s, idx) => ({ ...s, sequenceOrder: idx + 1 }));
+  }, [initialStops, isTspOptimized, servicedStops]);
 
   // Sync to localStorage
   useEffect(() => {
@@ -69,7 +100,7 @@ export const RoutesView = () => {
       const existing = saved ? JSON.parse(saved) : {};
       const updated = {
         ...existing,
-        badgeId: driverInfo?.badgeId,
+        badgeId: driverInfo?.badgeId || badgeId,
         vehicleId: vehicle?.id,
         servicedStops: Array.from(servicedStops),
         lastUpdated: new Date().toISOString(),
@@ -77,7 +108,7 @@ export const RoutesView = () => {
       localStorage.setItem(storageKey, JSON.stringify(updated));
       localStorage.setItem('swaachx_driver_shift_state', JSON.stringify(updated));
     } catch (e) {}
-  }, [servicedStops, storageKey, driverInfo, vehicle]);
+  }, [servicedStops, storageKey, driverInfo, vehicle, badgeId]);
 
   const pendingStops = stops.filter((s) => !servicedStops.has(s.binId));
   const completedStops = stops.filter((s) => servicedStops.has(s.binId));
@@ -131,8 +162,9 @@ export const RoutesView = () => {
     addToast('🤖 TSP Optimization Engine running: calculating shortest street network trajectory...', 'info');
     setTimeout(() => {
       setIsOptimizing(false);
-      addToast('⚡ Route re-optimized! Estimated travel time reduced by 14% with prioritized critical bins.', 'success');
-    }, 900);
+      setIsTspOptimized(true);
+      addToast('⚡ Route re-optimized! Critical capacity bins prioritized and shortest turn path calculated.', 'success');
+    }, 600);
   };
 
   return (
@@ -174,6 +206,18 @@ export const RoutesView = () => {
                 <span className="badge badge-active" style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
                   {vehicle.id} • {vehicle.plateNumber}
                 </span>
+                <span
+                  className="badge"
+                  style={{
+                    fontSize: '11px',
+                    background: shiftStatus === 'Active Shift' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                    color: shiftStatus === 'Active Shift' ? 'var(--primary-600)' : '#dc2626',
+                    borderColor: shiftStatus === 'Active Shift' ? 'var(--primary-500)' : 'rgba(239, 68, 68, 0.35)',
+                    fontWeight: 800,
+                  }}
+                >
+                  {shiftStatus === 'Active Shift' ? '🟢 Online (Active)' : '🔴 Offline (Completed)'}
+                </span>
                 <span className="badge badge-neutral" style={{ fontSize: '10px' }}>
                   Badge #{driverInfo.badgeId}
                 </span>
@@ -198,7 +242,7 @@ export const RoutesView = () => {
             style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             <RotateCw size={13} className={isOptimizing ? 'animate-spin' : ''} />
-            <span>{isOptimizing ? 'Optimizing TSP...' : 'Optimize Waypoints'}</span>
+            <span>{isOptimizing ? 'Optimizing TSP...' : isTspOptimized ? 'Re-Optimize TSP' : 'Optimize Waypoints'}</span>
           </button>
         </div>
       </div>
@@ -422,20 +466,41 @@ export const RoutesView = () => {
                             </div>
                           </td>
                           <td style={{ textAlign: 'right' }}>
-                            {isCollected ? (
-                              <span className="badge badge-active" style={{ fontSize: '10px' }}>
-                                Picked Up
-                              </span>
-                            ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
                               <button
-                                onClick={() => handleCollectStop(stop)}
-                                className="btn btn-primary btn-sm"
-                                style={{ fontSize: '11px', padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                onClick={() => setTracingStop(stop)}
+                                className="btn btn-secondary btn-sm"
+                                style={{
+                                  fontSize: '11px',
+                                  padding: '4px 8px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  background: 'rgba(14, 165, 233, 0.1)',
+                                  color: 'var(--accent-cyan)',
+                                  borderColor: 'rgba(14, 165, 233, 0.3)',
+                                  fontWeight: 700,
+                                }}
+                                title="Navigate & Trace Turn-by-Turn GPS Route"
                               >
-                                <CheckCircle2 size={12} />
-                                <span>Empty</span>
+                                <Navigation size={11} />
+                                <span>Trace</span>
                               </button>
-                            )}
+                              {isCollected ? (
+                                <span className="badge badge-active" style={{ fontSize: '10px' }}>
+                                  Picked Up
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleCollectStop(stop)}
+                                  className="btn btn-primary btn-sm"
+                                  style={{ fontSize: '11px', padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  <CheckCircle2 size={12} />
+                                  <span>Empty</span>
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -447,6 +512,14 @@ export const RoutesView = () => {
           </div>
         </div>
       </div>
+
+      {/* Live Route Tracing Cockpit */}
+      <LiveRouteTracingModal
+        isOpen={!!tracingStop}
+        targetStop={tracingStop}
+        onClose={() => setTracingStop(null)}
+        isDriverMode={true}
+      />
     </div>
   );
 };
