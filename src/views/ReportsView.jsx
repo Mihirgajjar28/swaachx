@@ -481,7 +481,7 @@ export const ReportsView = () => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
                   <label className="form-label" style={{ margin: 0 }}>
                     <span>Evidence Photo Attachment</span>
-                    <span style={{ color: 'var(--accent-rose)' }}> * (Compulsory)</span>
+                    <span style={{ color: 'var(--accent-rose)', marginLeft: '4px' }}>*</span>
                   </label>
                   {(photoName || photoFile || photoPreview) && (
                     <button
@@ -505,12 +505,12 @@ export const ReportsView = () => {
                       {isScanningPhoto ? (
                         <>
                           <Loader2 size={12} className="spin" />
-                          <span>Gemini Scanning...</span>
+                          <span>Scanning...</span>
                         </>
                       ) : (
                         <>
                           <Sparkles size={12} color="var(--primary-600)" />
-                          <span>Re-Scan with Gemini</span>
+                          <span>Scan</span>
                         </>
                       )}
                     </button>
