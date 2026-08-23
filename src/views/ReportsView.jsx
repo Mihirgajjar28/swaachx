@@ -56,7 +56,7 @@ export const ReportsView = () => {
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState('Medium');
-  const [photoName, setPhotoName] = useState('waste_site_evidence.jpg');
+  const [photoName, setPhotoName] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [wasteValidation, setWasteValidation] = useState(null);
@@ -235,7 +235,8 @@ export const ReportsView = () => {
     setDescription('');
     setLocation('');
     setCoordinates(null);
-    setPhotoName('waste_site_evidence.jpg');
+    setPhotoName('');
+    setPhotoFile(null);
     setPhotoPreview('');
     setWasteValidation(null);
     setActiveSubTab('queue');
@@ -541,7 +542,7 @@ export const ReportsView = () => {
                     ) : (
                       <>
                         <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                          Click to select image
+                          Click to upload image
                         </span>{' '}
                         <span style={{ color: 'var(--text-muted)' }}>or drag and drop</span>
                       </>
