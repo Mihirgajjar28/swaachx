@@ -291,21 +291,22 @@ export const analyzeWasteWithGemini = async ({
       if (base64Data) {
         const prompt = `
 You are the swaach.x Municipal AI Waste Verification & Circular Economy Assistant.
-Carefully analyze this uploaded image.
+Carefully analyze this uploaded image for municipal waste reporting and circular segregation.
+User context / Image tag: "${textHint}".
 
-CRITICAL FIRST REQUIREMENT:
-Determine whether the image depicts actual physical discarded waste, garbage, trash, litter, food scraps, or recyclable containers.
-If the image is a screenshot of software / website / UI / tables / code, a person/selfie, a living animal/pet, a clean room, a car/vehicle, a document, currency, or any intact non-discarded object:
-You MUST mark isWaste as false!
-Return this JSON:
+IMPORTANT CLASSIFICATION RULES:
+- Discarded items such as fruit peels, vegetable scraps, kitchen food waste, cardboard boxes, corrugated shipping cartons, empty bottles, aluminum cans, e-waste, and discarded containers MUST be classified as valid physical waste (isWaste: true).
+- If the image is a computer screenshot, software UI/dashboard, person portrait/selfie, living animal/pet, clean room/furniture, or document/currency: You MUST mark isWaste as false.
+
+Return JSON format:
+If NOT waste:
 {
   "isWaste": false,
   "detectedObject": "Specific name of what is shown (e.g. Software Screenshot, User Interface, Person Portrait, Pet Animal, Clean Furniture)",
   "nonWasteReason": "This is not a waste item. The image appears to be a digital screenshot or non-waste photo. Please upload a clear photo of garbage or recyclable waste for segregation suggestions."
 }
 
-ONLY IF the image clearly depicts actual physical discarded waste, garbage, trash accumulation, or recyclable containers:
-Return this JSON:
+If VALID waste:
 {
   "isWaste": true,
   "wasteType": "Concise specific name of the detected waste item(s)",
@@ -359,6 +360,23 @@ Return this JSON:
             try {
               const cleanJson = candidateText.replace(/```json/g, '').replace(/```/g, '').trim();
               const parsed = JSON.parse(cleanJson);
+
+              // If Gemini misclassified a genuine preset/waste keyword as non-waste, apply verified knowledge base
+              if (!parsed.isWaste && textHint) {
+                const searchCue = `${textHint}`.toLowerCase().trim();
+                const isExplicitFake = NON_WASTE_KEYWORDS.some((kw) => searchCue.includes(kw));
+                if (!isExplicitFake) {
+                  const kbFallback = findKnowledgeBaseMatch(searchCue);
+                  if (kbFallback.isWaste) {
+                    return {
+                      success: true,
+                      source: 'Google Gemini Vision AI 3.6 (Assisted)',
+                      ...kbFallback,
+                    };
+                  }
+                }
+              }
+
               return {
                 success: true,
                 source: 'Google Gemini Vision AI 3.6 (Live)',
@@ -396,49 +414,49 @@ export const PRESET_WASTE_SAMPLES = [
     name: 'Plastic Water Bottles (PET)',
     category: 'Dry Recyclable',
     icon: '🧴',
-    tag: 'plastic bottle pet packaging container',
+    tag: 'plastic bottle pet packaging container plastic waste',
     previewUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&auto=format&fit=crop&q=60',
   },
   {
     name: 'Kitchen Vegetable & Fruit Scraps',
     category: 'Organic Wet Waste',
     icon: '🥦',
-    tag: 'vegetable scrap fruit peel food waste banana organic wet',
-    previewUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=60',
+    tag: 'vegetable scrap fruit peel kitchen food waste organic wet compost biomass',
+    previewUrl: 'https://images.unsplash.com/photo-1595278069441-2cf29f8005a4?w=500&auto=format&fit=crop&q=60',
   },
   {
     name: 'Corrugated Shipping Boxes',
     category: 'Cardboard Paper',
     icon: '📦',
-    tag: 'corrugated box cardboard carton packaging paper',
-    previewUrl: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&auto=format&fit=crop&q=60',
+    tag: 'corrugated shipping box cardboard carton paper packaging waste',
+    previewUrl: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=500&auto=format&fit=crop&q=60',
   },
   {
     name: 'Old USB Cables & Dead Batteries',
     category: 'Electronic E-Waste',
     icon: '⚡',
-    tag: 'battery e-waste cable charger wire gadget electronic',
+    tag: 'battery e-waste cable charger wire gadget electronic ewaste',
     previewUrl: 'https://images.unsplash.com/photo-1588508065123-287b28e013da?w=500&auto=format&fit=crop&q=60',
   },
   {
     name: 'Aluminum Beverage Cans',
     category: 'Metal Scrap',
     icon: '🥫',
-    tag: 'aluminum can soda tin metal foil beverage',
+    tag: 'aluminum can soda tin metal foil beverage scrap metal',
     previewUrl: 'https://images.unsplash.com/photo-1582408921715-18e7806365c1?w=500&auto=format&fit=crop&q=60',
   },
   {
     name: 'Empty Glass Condiment Jars',
     category: 'Glass / Silica',
     icon: '🏺',
-    tag: 'glass jar bottle pickle condiment',
+    tag: 'glass jar bottle pickle condiment glass waste',
     previewUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=60',
   },
   {
     name: 'UI Screenshot Test (Non-Waste)',
     category: 'Non-Waste Entity',
     icon: '💻',
-    tag: 'screenshot ui dashboard table ticket not_waste',
+    tag: 'screenshot ui dashboard table ticket not_waste fake_report',
     previewUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&auto=format&fit=crop&q=60',
   },
 ];
