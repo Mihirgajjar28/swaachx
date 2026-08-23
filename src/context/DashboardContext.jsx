@@ -2121,6 +2121,7 @@ export const DashboardProvider = ({ children }) => {
   }) => {
     const nextIndex = vehicles.length + 1;
     const badgeSuffix = nextIndex < 10 ? '0' + nextIndex : nextIndex;
+    const vehicleId = `TRK-AMD-8${badgeSuffix}`;
     const cleanName = (driverName || 'Municipal Driver').trim();
     const nameParts = cleanName.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
     const nameSlug = nameParts.length >= 2 ? `${nameParts[0]}.${nameParts[nameParts.length - 1]}` : (nameParts[0] || 'driver');
@@ -2173,6 +2174,33 @@ export const DashboardProvider = ({ children }) => {
       } catch (e) {}
       return updated;
     });
+
+    // Supabase Cloud sync if configured
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        supabase
+          .from('vehicles')
+          .insert([
+            {
+              id: vehicleId,
+              plate_number: plate,
+              driver_name: cleanName,
+              driver_phone: cleanPhone,
+              driver_badge: badge,
+              driver_email: email,
+              driver_pin: pin,
+              type: vehicleType || 'Heavy Compactor (14T)',
+              status: 'Active',
+              last_location: `${wardSector || 'North-West Zone (Sola/Chandlodiya)'}, Ahmedabad`,
+              battery_or_fuel: Number(initialFuel) || 95,
+              load_capacity_percent: Number(initialLoad) || 0,
+              assigned_route: assignedRoute || `Route N${nextIndex} - ${wardSector || 'North/West Ahmedabad Corridor'}`,
+            },
+          ])
+          .then(() => {})
+          .catch((err) => console.warn('Supabase vehicle insert warning:', err));
+      } catch (e) {}
+    }
 
     addToast(`🚛 Driver ${cleanName} (${badge}) & Truck ${vehicleId} registered into Fleet Database!`, 'success');
     return { success: true, vehicle: newVehicle };
