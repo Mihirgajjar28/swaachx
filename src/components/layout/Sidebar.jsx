@@ -8,6 +8,7 @@ import {
   Recycle,
   Trash2,
   Compass,
+  Users,
   X,
 } from 'lucide-react';
 
@@ -35,6 +36,13 @@ export const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       icon: ClipboardList,
       badge: null,
       description: 'Submit Photo & GPS',
+    },
+    {
+      id: 'quests',
+      label: 'Community Quests',
+      icon: Users,
+      badge: '100+ ⭐',
+      description: 'Neighborhood Cleanup Drives',
     },
   ];
 

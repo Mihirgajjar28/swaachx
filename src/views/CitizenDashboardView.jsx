@@ -26,6 +26,7 @@ import {
   Compass,
   Truck,
   Phone,
+  Users,
 } from 'lucide-react';
 
 export const CitizenDashboardView = () => {
@@ -41,6 +42,8 @@ export const CitizenDashboardView = () => {
     selectedDustbin,
     setSelectedDustbin,
     currentUser,
+    communityQuests = [],
+    userKarmaPoints = 0,
     setActiveTab,
     isLoadingSkeleton,
     addToast,
@@ -190,6 +193,72 @@ export const CitizenDashboardView = () => {
         </button>
       </div>
 
+      {/* 🌟 COMMUNITY CLEANLINESS QUESTS BANNER */}
+      <div
+        className="glass-card animate-fade-in"
+        style={{
+          marginBottom: '20px',
+          padding: '16px 20px',
+          borderRadius: 'var(--radius-xl)',
+          background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(5, 150, 105, 0.06) 100%)',
+          border: '1.5px solid rgba(14, 165, 233, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '14px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', maxWidth: '620px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, var(--accent-cyan) 0%, var(--primary-500) 100%)',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(14, 165, 233, 0.3)',
+              flexShrink: 0,
+            }}
+          >
+            <Users size={22} />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                Community Cleanliness Quests & Plog Drives
+              </h3>
+              <span className="badge badge-active" style={{ fontSize: '10px' }}>
+                {communityQuests.length} Active Drives
+              </span>
+            </div>
+            <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', marginTop: '3px', lineHeight: 1.4 }}>
+              Meet nearby residents on scheduled dates, clean lakefronts & markets, and earn +50 Karma rewards. (100+ Karma required to organize).
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('quests')}
+          className="btn btn-secondary"
+          style={{
+            padding: '8px 16px',
+            fontWeight: 700,
+            fontSize: '12.5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <Users size={14} />
+          <span>Browse Quests</span>
+        </button>
+      </div>
+
       {/* 2. Citizen KPI Metrics */}
       <div className="metrics-grid">
         {isLoadingSkeleton ? (
@@ -236,10 +305,10 @@ export const CitizenDashboardView = () => {
                   <Award size={20} />
                 </div>
               </div>
-              <div className="metric-value">{myReports.length * 15} pts</div>
+              <div className="metric-value">{userKarmaPoints} pts</div>
               <div className="metric-label">My Eco Karma Points</div>
               <div className="metric-subtext">
-                <span>Community Contributor Tier</span>
+                <span>{userKarmaPoints >= 100 ? '⭐ Quest Organizer Unlocked' : `${100 - userKarmaPoints} more to organize`}</span>
               </div>
             </div>
 

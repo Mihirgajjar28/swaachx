@@ -1454,5 +1454,30 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
     expect(match.badgeId).not.toBe('DRV-801');
     localStorage.removeItem('swaachx_driver_shift_state_DRV-801');
   });
+
+  it('58. Community Cleanliness Quests: Users can browse and join neighborhood cleanup drives', async () => {
+    const { getStoredCommunityQuests, canUserOrganizeQuest } = await import('../lib/communityQuests');
+    const quests = getStoredCommunityQuests();
+    expect(quests.length).toBeGreaterThanOrEqual(4);
+
+    const firstQuest = quests[0];
+    expect(firstQuest.id).toBeDefined();
+    expect(firstQuest.title).toBeDefined();
+    expect(firstQuest.targetGoal).toBeDefined();
+    expect(firstQuest.karmaReward).toBeGreaterThanOrEqual(40);
+  });
+
+  it('59. Community Quest 100+ Karma Gate: Only users with >= 100 Karma Points can organize quests', async () => {
+    const { canUserOrganizeQuest } = await import('../lib/communityQuests');
+
+    // Users with < 100 Karma Points -> strictly NOT eligible
+    expect(canUserOrganizeQuest(0)).toBe(false);
+    expect(canUserOrganizeQuest(50)).toBe(false);
+    expect(canUserOrganizeQuest(99)).toBe(false);
+
+    // Users with >= 100 Karma Points -> ELIGIBLE to organize
+    expect(canUserOrganizeQuest(100)).toBe(true);
+    expect(canUserOrganizeQuest(140)).toBe(true);
+  });
 });
 

@@ -74,8 +74,12 @@ export const Header = ({ onMenuClick }) => {
     switch (activeTab) {
       case 'dashboard':
         return { title: 'Citizen Community Dashboard', subtitle: 'Incident reports & community rewards' };
+      case 'dustbins':
+        return { title: 'Dustbin Locator', subtitle: 'Smart GPS & Navigation' };
       case 'reports':
         return { title: 'Report Waste Issue', subtitle: 'Submit photo evidence & GPS geotag' };
+      case 'quests':
+        return { title: 'Community Cleanliness Quests', subtitle: 'Organize & join neighborhood cleanup drives' };
       default:
         return { title: 'Citizen Portal', subtitle: 'Smart civic reporting' };
     }

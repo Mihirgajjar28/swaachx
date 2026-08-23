@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
 import { supabase, isSupabaseConfigured, isTestEnv, db, saveSupabaseConfig, clearSupabaseConfig } from '../lib/supabaseClient';
 import { EMPTY_DASHBOARD_METRICS, DEFAULT_ML_HOTSPOTS, DEFAULT_DUSTBINS, DEFAULT_AHMEDABAD_VEHICLES, DEFAULT_AHMEDABAD_REPORTS } from '../types';
 import {
@@ -17,6 +17,11 @@ import {
   isMunicipalAdminEmail,
 } from '../lib/adminCredentials';
 import { findNearestDriverForReport } from '../lib/driverRouteAssignments';
+import {
+  getStoredCommunityQuests,
+  saveCommunityQuestsList,
+  canUserOrganizeQuest,
+} from '../lib/communityQuests';
 
 /**
  * Resolves full driver contact, badge, and vehicle details from assigned driver string
@@ -2080,6 +2085,91 @@ export const DashboardProvider = ({ children }) => {
     addToast(`🗑️ Smart Bin #${binId} emptied & sensor reset to 0%!`, 'success');
   };
 
+  // ============================================================================
+  // COMMUNITY CLEANLINESS QUESTS & ECO KARMA ENGINE
+  // ============================================================================
+  const [communityQuests, setCommunityQuests] = useState(() => getStoredCommunityQuests());
+
+  // Dynamic user karma points calculation (Base + Reports + Drives)
+  const userKarmaPoints = useMemo(() => {
+    if (!currentUser?.email) return 60;
+    const matchedCit = citizens.find(
+      (c) => c.email && c.email.toLowerCase() === currentUser.email.toLowerCase()
+    );
+    const base = matchedCit?.karmaPoints ?? currentUser?.karmaPoints ?? 50;
+    const myReportsCount = reports.filter(
+      (r) => r.citizenEmail && r.citizenEmail.toLowerCase() === currentUser.email.toLowerCase()
+    ).length;
+    const myQuestsOrganized = communityQuests.filter(
+      (q) => q.organizerEmail && q.organizerEmail.toLowerCase() === currentUser.email.toLowerCase()
+    ).length;
+    const myQuestsJoined = communityQuests.filter(
+      (q) => (q.joinedUserEmails || []).some((e) => e.toLowerCase() === currentUser.email.toLowerCase())
+    ).length;
+    return base + (myReportsCount * 15) + (myQuestsOrganized * 25) + (myQuestsJoined * 15);
+  }, [currentUser, citizens, reports, communityQuests]);
+
+  const handleJoinQuest = (questId) => {
+    if (!currentUser?.email) {
+      addToast('Please sign in to join community quests.', 'warning');
+      return;
+    }
+    const email = currentUser.email.toLowerCase();
+    setCommunityQuests((prev) => {
+      const updated = prev.map((q) => {
+        if (q.id === questId) {
+          const alreadyJoined = (q.joinedUserEmails || []).some((e) => e.toLowerCase() === email);
+          if (alreadyJoined) return q;
+          const joined = [...(q.joinedUserEmails || []), email];
+          return {
+            ...q,
+            joinedUserEmails: joined,
+            volunteersCount: (q.volunteersCount || 0) + 1,
+          };
+        }
+        return q;
+      });
+      saveCommunityQuestsList(updated);
+      return updated;
+    });
+    addToast('🎉 You joined this Community Cleanliness Quest! +50 Karma upon check-in.', 'success');
+  };
+
+  const handleLeaveQuest = (questId) => {
+    if (!currentUser?.email) return;
+    const email = currentUser.email.toLowerCase();
+    setCommunityQuests((prev) => {
+      const updated = prev.map((q) => {
+        if (q.id === questId) {
+          const filtered = (q.joinedUserEmails || []).filter((e) => e.toLowerCase() !== email);
+          return {
+            ...q,
+            joinedUserEmails: filtered,
+            volunteersCount: Math.max(0, (q.volunteersCount || 1) - 1),
+          };
+        }
+        return q;
+      });
+      saveCommunityQuestsList(updated);
+      return updated;
+    });
+    addToast('You left the community quest.', 'info');
+  };
+
+  const handleCreateQuest = (questData) => {
+    if (!canUserOrganizeQuest(userKarmaPoints)) {
+      addToast('⚠️ You must have at least 100 Eco Karma Points to organize a community quest.', 'error');
+      return false;
+    }
+    setCommunityQuests((prev) => {
+      const updated = [questData, ...prev];
+      saveCommunityQuestsList(updated);
+      return updated;
+    });
+    addToast(`🌟 Community Quest "${questData.title}" published! +25 Organizer Karma awarded.`, 'success');
+    return true;
+  };
+
   const clearAllData = () => {
     setReports([]);
     setVehicles([]);
@@ -2143,6 +2233,12 @@ export const DashboardProvider = ({ children }) => {
         resolveReport,
         emptyDustbin,
         clearAllData,
+        communityQuests,
+        userKarmaPoints,
+        handleJoinQuest,
+        handleLeaveQuest,
+        handleCreateQuest,
+        canUserOrganizeQuest,
         toasts,
         addToast,
         removeToast,

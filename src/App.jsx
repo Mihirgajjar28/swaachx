@@ -15,6 +15,7 @@ import { ReportsView } from './views/ReportsView';
 import { VehiclesView } from './views/VehiclesView';
 import { RoutesView } from './views/RoutesView';
 import { DustbinsView } from './views/DustbinsView';
+import { CommunityQuestsView } from './views/CommunityQuestsView';
 import { DriverPersistentDispatchBanner } from './components/layout/DriverPersistentDispatchBanner';
 import './App.css';
 
@@ -71,6 +72,8 @@ const MainContent = () => {
         return <DustbinsView />;
       case 'reports':
         return <ReportsView />;
+      case 'quests':
+        return <CommunityQuestsView />;
       default:
         return <CitizenDashboardView />;
     }
