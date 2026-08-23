@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { DustbinMap } from '../components/maps/DustbinMap';
+import { detectCurrentLocation } from '../lib/geolocation';
 import {
   Trash2,
   Compass,
   Search,
   X,
   Footprints,
-  MapPin,
 } from 'lucide-react';
 
 export const DustbinsView = () => {
@@ -31,6 +31,25 @@ export const DustbinsView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // Automatically acquire fresh high-accuracy GPS fix on initial load
+  useEffect(() => {
+    let isMounted = true;
+    detectCurrentLocation().then((loc) => {
+      if (isMounted && loc && loc.coordinates) {
+        setUserLocation({
+          lat: loc.coordinates.lat,
+          lng: loc.coordinates.lng,
+          address: loc.address,
+          accuracy: 'High Precision GPS',
+        });
+      }
+    }).catch(console.warn);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Compute live distances from user's coordinates to all dustbins
   const processedDustbins = useMemo(() => {
@@ -91,17 +110,39 @@ export const DustbinsView = () => {
     }
   };
 
-  // Trigger browser GPS locator and route to closest bin directly on map
+  // Trigger high-accuracy hardware GPS locator and route to closest bin directly on map
   const handleDetectGPS = () => {
     setIsNavigating(true);
-    const result = locateNearestDustbin();
-    if (result && typeof result.then === 'function') {
-      result.then((bin) => {
-        if (bin) setSelectedDustbin(bin);
-      });
-    } else if (dustbins && dustbins.length > 0) {
+    setIsDetectingLocation(true);
+
+    // 1. Immediately select nearest dustbin from current coordinates
+    if (dustbins && dustbins.length > 0) {
       setSelectedDustbin(dustbins[0]);
     }
+
+    // 2. Fetch fresh high-precision hardware GPS coordinates asynchronously
+    detectCurrentLocation().then((loc) => {
+      setIsDetectingLocation(false);
+      if (loc && loc.coordinates) {
+        setUserLocation({
+          lat: loc.coordinates.lat,
+          lng: loc.coordinates.lng,
+          address: loc.address,
+          accuracy: 'High Precision GPS',
+        });
+        locateNearestDustbin(loc.coordinates).then((nearest) => {
+          if (nearest) {
+            setSelectedDustbin(nearest.bin || nearest);
+            addToast(`📍 Exact Location: ${loc.address}`, 'success');
+          }
+        });
+      } else {
+        locateNearestDustbin();
+      }
+    }).catch(() => {
+      setIsDetectingLocation(false);
+      locateNearestDustbin();
+    });
   };
 
   const handleStopNavigation = () => {
@@ -124,7 +165,7 @@ export const DustbinsView = () => {
           gap: '12px',
         }}
       >
-        {/* Title */}
+        {/* Title & Live Detected Address */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
@@ -146,7 +187,7 @@ export const DustbinsView = () => {
               Dustbin Locator
             </h1>
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
-              Click any dustbin on the map or tap Find Nearest Bin for live walking directions
+              {userLocation?.address ? `📍 Near ${userLocation.address}` : 'Find nearest public waste bins & get walking directions'}
             </p>
           </div>
         </div>
@@ -241,7 +282,7 @@ export const DustbinsView = () => {
             }}
           >
             <Compass size={15} className={isDetectingLocation ? 'animate-spin' : ''} />
-            <span>{isDetectingLocation ? 'Locating...' : '📍 Find Nearest Bin'}</span>
+            <span>{isDetectingLocation ? 'Detecting GPS...' : '📍 Find Nearest Bin'}</span>
           </button>
         </div>
       </div>
