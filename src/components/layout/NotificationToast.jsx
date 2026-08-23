@@ -24,7 +24,7 @@ export const NotificationToast = () => {
         pointerEvents: 'none',
       }}
     >
-      {toasts.map((toast) => (
+      {toasts.slice(-2).map((toast) => (
         <div
           key={toast.id}
           className="animate-toast-in"

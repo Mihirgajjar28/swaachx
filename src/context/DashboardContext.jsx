@@ -331,15 +331,30 @@ export const DashboardProvider = ({ children }) => {
     predictedHotspots: 0,
   });
 
-  // Toast notifications for user actions
+  // Toast notifications for user actions with duplicate suppression and max queue size
   const [toasts, setToasts] = useState([]);
+  const lastToastsRef = useRef(new Map());
 
   const addToast = (message, type = 'info') => {
-    const id = Date.now().toString();
-    setToasts((prev) => [...prev, { id, message, type }]);
+    if (!message) return;
+    const now = Date.now();
+    const lastTime = lastToastsRef.current.get(message);
+    // Ignore duplicate identical messages triggered within 3.5 seconds
+    if (lastTime && now - lastTime < 3500) {
+      return;
+    }
+    lastToastsRef.current.set(message, now);
+
+    const id = Date.now().toString() + Math.random().toString().slice(2, 6);
+    setToasts((prev) => {
+      // Keep at most 2 toasts active on screen to prevent screen clutter
+      const trimmed = prev.slice(-1);
+      return [...trimmed, { id, message, type }];
+    });
+
     setTimeout(() => {
-      removeToast(id);
-    }, 4000);
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3000);
   };
 
   const removeToast = (id) => {
@@ -668,6 +683,7 @@ export const DashboardProvider = ({ children }) => {
         firedTransitionsSetRef.current.add(`${rep.id}_Dispatched`);
         firedTransitionsSetRef.current.add(`${rep.id}_Resolved`);
       });
+      isInitialDatabaseLoadedRef.current = true;
       return;
     }
 
@@ -679,13 +695,13 @@ export const DashboardProvider = ({ children }) => {
       if (prev && !firedTransitionsSetRef.current.has(transitionKey)) {
         firedTransitionsSetRef.current.add(transitionKey);
 
-        // Check if report belongs to current citizen user
-        const isMyReport =
-          !currentUser ||
-          currentUser.role !== 'Citizen' ||
-          !currentUser.email ||
-          (rep.citizenEmail && rep.citizenEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
-          (rep.citizenName && currentUser.name && rep.citizenName.toLowerCase() === currentUser.name.toLowerCase());
+        // Check if report strictly belongs to the currently logged in citizen
+        const isMyReport = Boolean(
+          currentUser?.role === 'Citizen' &&
+          currentUser?.email &&
+          rep.citizenEmail &&
+          rep.citizenEmail.toLowerCase() === currentUser.email.toLowerCase()
+        );
 
         // A. Transition to 'Dispatched' (Driver Accepted & Confirmed Assignment)
         if (
