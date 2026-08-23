@@ -170,6 +170,7 @@ export const VehiclesView = () => {
               activeItemsCount={filteredVehicles.length}
               itemType="Municipal Trucks"
               emptyMessage="No active vehicle GPS markers plotted. Ready to receive streaming coordinates."
+              showHud={false}
             >
               <FleetGisMarkers vehicles={filteredVehicles.length > 0 ? filteredVehicles : vehicles} showRoutes={true} />
             </MapPlaceholder>
