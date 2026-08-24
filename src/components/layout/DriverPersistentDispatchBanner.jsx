@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { getDriverAssignmentProfile } from '../../lib/driverRouteAssignments';
 import { LiveRouteTracingModal } from '../maps/LiveRouteTracingModal';
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import {
   MapPin,
@@ -13,6 +13,25 @@ import {
   CheckCircle2,
   X,
 } from 'lucide-react';
+
+// Auto-Fit map bounds so both driver truck and incident location are clearly visible
+const AutoFitBounds = ({ points }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (!map || !points || points.length === 0) return;
+    try {
+      const validPoints = points.filter(
+        (p) => p && Array.isArray(p) && typeof p[0] === 'number' && typeof p[1] === 'number' && !isNaN(p[0]) && !isNaN(p[1])
+      );
+      if (validPoints.length > 1) {
+        map.fitBounds(validPoints, { padding: [35, 35], maxZoom: 15 });
+      } else if (validPoints.length === 1) {
+        map.setView(validPoints[0], 14);
+      }
+    } catch (e) {}
+  }, [map, points]);
+  return null;
+};
 
 // Custom Pin Icons for Mini-Map in Popup
 const reportPinIcon = L.divIcon({
@@ -555,60 +574,157 @@ export const DriverPersistentDispatchBanner = () => {
               )}
 
               {/* Interactive Mini-Map Preview */}
-              <div
-                style={{
-                  borderRadius: 'var(--radius-md)',
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-medium)',
-                  height: '180px',
-                  position: 'relative',
-                }}
-              >
-                <MapContainer
-                  center={[
-                    activePopupReport.coordinates?.lat || activePopupReport.latitude || 23.0338,
-                    activePopupReport.coordinates?.lng || activePopupReport.longitude || 72.5607,
-                  ]}
-                  zoom={14}
-                  scrollWheelZoom={false}
-                  style={{ height: '100%', width: '100%' }}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Navigation size={12} style={{ color: 'var(--primary-600)' }} />
+                    <span>PROXIMITY & ROUTE TRAJECTORY</span>
+                  </div>
+                  <span style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--primary-600)', background: 'rgba(14, 165, 233, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+                    📍 ~{activePopupReport.distanceKm || '1.4'} km • ETA ~{activePopupReport.etaMinutes || '12'} mins
+                  </span>
+                </div>
+
+                <div
+                  style={{
+                    borderRadius: 'var(--radius-md)',
+                    overflow: 'hidden',
+                    border: '1px solid var(--border-medium)',
+                    height: '210px',
+                    position: 'relative',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+                  }}
                 >
-                  <TileLayer
-                    attribution='&copy; OpenStreetMap'
-                    url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                  />
-                  {/* Truck Marker */}
-                  <Marker position={[truckLat, truckLng]} icon={driverTruckIcon}>
-                    <Popup>
-                      <div style={{ fontSize: '11px', fontWeight: 700 }}>🚛 Your Truck ({vehicle?.id || 'TRK-801'})</div>
-                    </Popup>
-                  </Marker>
-                  {/* Report Location Pin */}
-                  <Marker
-                    position={[
+                  {/* Top-Left Truck HUD Badge */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      left: '10px',
+                      zIndex: 500,
+                      background: 'rgba(15, 23, 42, 0.88)',
+                      color: '#ffffff',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      backdropFilter: 'blur(4px)',
+                      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)',
+                    }}
+                  >
+                    <span>🚛</span>
+                    <span>Your Truck ({vehicle?.id || 'TRK-801'})</span>
+                  </div>
+
+                  {/* Top-Right Incident Site HUD Badge */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      zIndex: 500,
+                      background: 'rgba(220, 38, 38, 0.92)',
+                      color: '#ffffff',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      backdropFilter: 'blur(4px)',
+                      boxShadow: '0 2px 6px rgba(220, 38, 38, 0.4)',
+                    }}
+                  >
+                    <span>📍</span>
+                    <span>Incident Location</span>
+                  </div>
+
+                  <MapContainer
+                    center={[
                       activePopupReport.coordinates?.lat || activePopupReport.latitude || 23.0338,
                       activePopupReport.coordinates?.lng || activePopupReport.longitude || 72.5607,
                     ]}
-                    icon={reportPinIcon}
+                    zoom={14}
+                    zoomControl={false}
+                    scrollWheelZoom={false}
+                    style={{ height: '100%', width: '100%' }}
                   >
-                    <Popup>
-                      <div style={{ fontSize: '11px', fontWeight: 700 }}>📍 #{activePopupReport.id}: {activePopupReport.location}</div>
-                    </Popup>
-                  </Marker>
-                  {/* Direct Line between Truck and Incident */}
-                  <Polyline
-                    positions={[
-                      [truckLat, truckLng],
-                      [
+                    <TileLayer
+                      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                    />
+
+                    {/* Auto-fit map viewport to show both truck & report */}
+                    <AutoFitBounds
+                      points={[
+                        [truckLat, truckLng],
+                        [
+                          activePopupReport.coordinates?.lat || activePopupReport.latitude || 23.0338,
+                          activePopupReport.coordinates?.lng || activePopupReport.longitude || 72.5607,
+                        ],
+                      ]}
+                    />
+
+                    {/* Truck Marker */}
+                    <Marker position={[truckLat, truckLng]} icon={driverTruckIcon}>
+                      <Popup>
+                        <div style={{ fontSize: '11px', fontWeight: 700 }}>🚛 Your Truck ({vehicle?.id || 'TRK-801'})</div>
+                      </Popup>
+                    </Marker>
+
+                    {/* Report Location Pin */}
+                    <Marker
+                      position={[
                         activePopupReport.coordinates?.lat || activePopupReport.latitude || 23.0338,
                         activePopupReport.coordinates?.lng || activePopupReport.longitude || 72.5607,
-                      ],
-                    ]}
-                    color="#0284c7"
-                    dashArray="6, 8"
-                    weight={3}
-                  />
-                </MapContainer>
+                      ]}
+                      icon={reportPinIcon}
+                    >
+                      <Popup>
+                        <div style={{ fontSize: '11px', fontWeight: 700 }}>📍 #{activePopupReport.id}: {activePopupReport.location}</div>
+                      </Popup>
+                    </Marker>
+
+                    {/* Route Line connecting truck and incident site */}
+                    <Polyline
+                      positions={[
+                        [truckLat, truckLng],
+                        [
+                          activePopupReport.coordinates?.lat || activePopupReport.latitude || 23.0338,
+                          activePopupReport.coordinates?.lng || activePopupReport.longitude || 72.5607,
+                        ],
+                      ]}
+                      color="#0284c7"
+                      dashArray="6, 8"
+                      weight={3.5}
+                    />
+                  </MapContainer>
+                </div>
+
+                {/* 1-Click Launch Live GPS Navigation button */}
+                <button
+                  type="button"
+                  onClick={() => handleStartNavigation(activePopupReport)}
+                  className="btn btn-primary"
+                  style={{
+                    marginTop: '10px',
+                    width: '100%',
+                    padding: '10px 16px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <Navigation size={14} />
+                  <span>Open Turn-by-Turn GPS Navigation</span>
+                </button>
               </div>
             </div>
           </div>
