@@ -470,11 +470,11 @@ export const getDriverAssignmentProfile = ({
       if (saved) localSavedReports = JSON.parse(saved);
     } catch (e) {}
 
-    // Combine all unique reports from allReports, localStorage, and default sector reports
+    // Combine all unique reports: default sector reports -> live context reports -> freshest localStorage reports
     const combinedMap = new Map();
+    DEFAULT_AHMEDABAD_SECTOR_REPORTS.forEach((r) => { if (r?.id) combinedMap.set(r.id, r); });
     (allReports || []).forEach((r) => { if (r?.id) combinedMap.set(r.id, r); });
-    (localSavedReports || []).forEach((r) => { if (r?.id && !combinedMap.has(r.id)) combinedMap.set(r.id, r); });
-    DEFAULT_AHMEDABAD_SECTOR_REPORTS.forEach((r) => { if (r?.id && !combinedMap.has(r.id)) combinedMap.set(r.id, r); });
+    (localSavedReports || []).forEach((r) => { if (r?.id) combinedMap.set(r.id, r); });
 
     const sourceReports = Array.from(combinedMap.values());
 
@@ -652,7 +652,7 @@ export const findNearestDriverForReport = ({ lat, lng, ward = '', location = '' 
       ? v.id === 'TRK-AMD-802' || v.id === 'TRK-802' || (v.driverBadge || '').includes('802')
       : text.includes('sg highway') || text.includes('thaltej') || text.includes('bodakdev')
       ? v.id === 'TRK-AMD-803' || v.id === 'TRK-803' || (v.driverBadge || '').includes('803')
-      : text.includes('manek') || text.includes('khadia') || text.includes('walled')
+      : text.includes('manek') || text.includes('khadia') || text.includes('walled') || text.includes('kalupur') || text.includes('market') || text.includes('central') || text.includes('relief')
       ? v.id === 'TRK-AMD-804' || v.id === 'TRK-804' || (v.driverBadge || '').includes('804')
       : route.includes(text) || vWard.includes(text);
   });
