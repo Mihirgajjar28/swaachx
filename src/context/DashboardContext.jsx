@@ -618,6 +618,22 @@ export const DashboardProvider = ({ children }) => {
     }
   };
 
+  // Cross-tab real-time sync for local reports between Citizen & Driver interfaces
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'swaachx_local_reports' && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setReports(parsed);
+          }
+        } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   // Recalculate metrics whenever reports or vehicles change
   useEffect(() => {
     setMetrics({

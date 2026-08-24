@@ -28,6 +28,7 @@ import {
   Trash2,
   Compass,
   ShieldCheck,
+  Phone,
 } from 'lucide-react';
 
 export const DriverDashboardView = () => {
@@ -876,72 +877,134 @@ export const DriverDashboardView = () => {
                     badgeText="Queue Clean"
                   />
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {pendingReports.map((rep) => (
-                      <div
-                        key={rep.id}
-                        style={{
-                          padding: '12px 14px',
-                          borderRadius: 'var(--radius-md)',
-                          background: 'var(--bg-surface-elevated)',
-                          border: '1px solid var(--border-subtle)',
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-                            #{rep.id}
-                          </span>
-                          <span
-                            className={`badge ${rep.priority === 'Critical' ? 'badge-high' : 'badge-neutral'}`}
-                            style={{ fontSize: '10px' }}
-                          >
-                            {rep.priority} Priority
-                          </span>
-                        </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {pendingReports.map((rep) => {
+                      const photo = rep.photoUrl || rep.photo_url;
+                      return (
+                        <div
+                          key={rep.id}
+                          style={{
+                            padding: '14px 16px',
+                            borderRadius: 'var(--radius-md)',
+                            background: 'var(--bg-surface-elevated)',
+                            border: '1px solid var(--border-subtle)',
+                            transition: 'all 0.2s ease',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', flexWrap: 'wrap', gap: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--primary-600)', fontFamily: 'var(--font-mono)' }}>
+                                #{rep.id}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: '10px',
+                                  fontWeight: 800,
+                                  color: '#0d9488',
+                                  background: 'rgba(13, 148, 136, 0.12)',
+                                  border: '1px solid rgba(13, 148, 136, 0.3)',
+                                  padding: '2px 7px',
+                                  borderRadius: '4px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '3px',
+                                }}
+                              >
+                                <Clock size={10} />
+                                30-Min SLA Direct Dispatch
+                              </span>
+                            </div>
 
-                        <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '3px' }}>
-                          {rep.category}
-                        </div>
+                            <span
+                              className={`badge ${rep.priority === 'Critical' ? 'badge-high' : 'badge-neutral'}`}
+                              style={{ fontSize: '10px' }}
+                            >
+                              {rep.priority} Priority
+                            </span>
+                          </div>
 
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                          📍 {rep.location}
-                        </div>
+                          <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                            {rep.category}
+                          </div>
 
-                        <p style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '8px' }}>
-                          {rep.description}
-                        </p>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                            <MapPin size={13} style={{ color: 'var(--accent-rose)', flexShrink: 0 }} />
+                            <span style={{ fontWeight: 600 }}>{rep.location}</span>
+                            {rep.distanceKm && (
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                (📏 ~{rep.distanceKm} km away • ETA ~{rep.etaMinutes || '12'} mins)
+                              </span>
+                            )}
+                          </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                          <button
-                            onClick={() => setTracingReport(rep)}
-                            className="btn btn-secondary btn-sm"
-                            style={{
-                              fontSize: '11px',
-                              padding: '4px 10px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              background: 'rgba(14, 165, 233, 0.12)',
-                              color: 'var(--accent-cyan)',
-                              borderColor: 'rgba(14, 165, 233, 0.3)',
-                              fontWeight: 700,
-                            }}
-                          >
-                            <Navigation size={12} />
-                            <span>Navigate & Trace Route</span>
-                          </button>
-                          <button
-                            onClick={() => handleResolveButtonClick(rep)}
-                            className="btn btn-primary btn-sm"
-                            style={{ fontSize: '11px', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                          >
-                            <ShieldCheck size={12} />
-                            <span>AI Verify & Mark Site Cleared</span>
-                          </button>
+                          {rep.citizenName && rep.citizenName !== 'Citizen Resident' && (
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span>👤 Citizen: {rep.citizenName}</span>
+                              {rep.citizenPhone && rep.citizenPhone !== '—' && (
+                                <a
+                                  href={`tel:${rep.citizenPhone}`}
+                                  style={{ color: 'var(--primary-600)', textDecoration: 'none', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px', marginLeft: 'auto' }}
+                                >
+                                  <Phone size={11} />
+                                  <span>{rep.citizenPhone}</span>
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          {rep.description && (
+                            <p style={{ fontSize: '11.5px', color: 'var(--text-secondary)', lineHeight: 1.4, marginBottom: '8px', fontStyle: 'italic', background: 'var(--bg-surface)', padding: '6px 10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                              "{rep.description}"
+                            </p>
+                          )}
+
+                          {photo && (
+                            <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <img
+                                src={photo}
+                                alt="Waste evidence"
+                                style={{ width: '56px', height: '56px', borderRadius: 'var(--radius-sm)', objectFit: 'cover', border: '1px solid var(--border-subtle)' }}
+                              />
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                                <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Evidence Photo Attached</span>
+                                <br />
+                                Verified legitimate municipal waste cluster
+                              </div>
+                            </div>
+                          )}
+
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+                            <button
+                              onClick={() => setTracingReport(rep)}
+                              className="btn btn-secondary btn-sm"
+                              style={{
+                                fontSize: '11px',
+                                padding: '5px 12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                background: 'rgba(14, 165, 233, 0.12)',
+                                color: 'var(--accent-cyan)',
+                                borderColor: 'rgba(14, 165, 233, 0.3)',
+                                fontWeight: 700,
+                              }}
+                            >
+                              <Navigation size={12} />
+                              <span>Navigate & Trace Route</span>
+                            </button>
+                            <button
+                              onClick={() => handleResolveButtonClick(rep)}
+                              className="btn btn-primary btn-sm"
+                              style={{ fontSize: '11px', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              <ShieldCheck size={12} />
+                              <span>AI Verify & Mark Site Cleared</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>

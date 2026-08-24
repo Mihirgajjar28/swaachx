@@ -143,49 +143,53 @@ export const DriverPersistentDispatchBanner = () => {
   };
 
   // Combine direct assignments and any pending requests
-  const totalAlertReports = [...activeDispatchedReports, ...pendingApprovals];
-  if (isOffline || totalAlertReports.length === 0) return null;
+  const unacknowledgedReports = [...activeDispatchedReports, ...pendingApprovals].filter(
+    (req) => !acknowledgedSet.has(req.id)
+  );
+
+  if (isOffline || (!activePopupReport && !navigatingReport && unacknowledgedReports.length === 0)) return null;
 
   const truckLat = vehicle?.coordinates?.lat || 23.0450;
   const truckLng = vehicle?.coordinates?.lng || 72.5441;
 
   return (
     <>
-      {/* 1. Top Sticky Status Banner for Driver */}
-      <div
-        className="driver-persistent-dispatch-container"
-        style={{
-          position: 'sticky',
-          top: '0px',
-          zIndex: 90,
-          marginBottom: '16px',
-        }}
-      >
-        {totalAlertReports.map((req) => {
-          const isDirect = req.status === 'Dispatched';
-          return (
-            <div
-              key={req.id}
-              className="animate-slide-down"
-              style={{
-                background: isDirect
-                  ? 'linear-gradient(135deg, rgba(15, 118, 110, 0.98), rgba(13, 148, 136, 0.98))'
-                  : 'linear-gradient(135deg, rgba(239, 68, 68, 0.97), rgba(220, 38, 38, 0.99))',
-                color: '#ffffff',
-                borderRadius: 'var(--radius-lg)',
-                boxShadow: isDirect
-                  ? '0 8px 24px rgba(13, 148, 136, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2)'
-                  : '0 8px 30px rgba(239, 68, 68, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25)',
-                border: '2px solid rgba(255, 255, 255, 0.35)',
-                padding: '12px 18px',
-                marginBottom: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '12px',
-              }}
-            >
+      {/* 1. Top Status Alert Banner for Driver (Only when new alert is active) */}
+      {unacknowledgedReports.length > 0 && (
+        <div
+          className="driver-persistent-dispatch-container"
+          style={{
+            position: 'sticky',
+            top: '0px',
+            zIndex: 90,
+            marginBottom: '16px',
+          }}
+        >
+          {unacknowledgedReports.map((req) => {
+            const isDirect = req.status === 'Dispatched';
+            return (
+              <div
+                key={req.id}
+                className="animate-slide-down"
+                style={{
+                  background: isDirect
+                    ? 'linear-gradient(135deg, rgba(15, 118, 110, 0.98), rgba(13, 148, 136, 0.98))'
+                    : 'linear-gradient(135deg, rgba(239, 68, 68, 0.97), rgba(220, 38, 38, 0.99))',
+                  color: '#ffffff',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: isDirect
+                    ? '0 8px 24px rgba(13, 148, 136, 0.35), 0 2px 6px rgba(0, 0, 0, 0.2)'
+                    : '0 8px 30px rgba(239, 68, 68, 0.45), 0 2px 8px rgba(0, 0, 0, 0.25)',
+                  border: '2px solid rgba(255, 255, 255, 0.35)',
+                  padding: '12px 18px',
+                  marginBottom: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '280px', flex: '1' }}>
                 <div
                   style={{
@@ -349,6 +353,7 @@ export const DriverPersistentDispatchBanner = () => {
           );
         })}
       </div>
+      )}
 
       {/* 2. High-Priority Direct Assignment Pop-up Modal */}
       {activePopupReport && (
