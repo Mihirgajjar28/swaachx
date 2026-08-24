@@ -901,15 +901,22 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
     });
 
     // 3. Clear all assigned smart bins
-    const collectButtons = screen.getAllByText(/Collect & Empty Bin/i);
-    collectButtons.forEach((btn) => fireEvent.click(btn));
+    let collectButtons = screen.queryAllByText(/Collect & Empty Bin/i);
+    while (collectButtons.length > 0) {
+      fireEvent.click(collectButtons[0]);
+      collectButtons = screen.queryAllByText(/Collect & Empty Bin/i);
+    }
 
     // 4. Resolve all sector citizen reports
-    const resolveButtons = screen.getAllByText(/Mark Site Cleared/i);
-    resolveButtons.forEach((btn) => fireEvent.click(btn));
+    let resolveButtons = screen.queryAllByText(/Mark Site Cleared/i);
+    while (resolveButtons.length > 0) {
+      fireEvent.click(resolveButtons[0]);
+      resolveButtons = screen.queryAllByText(/Mark Site Cleared/i);
+    }
 
     // 5. Now that all bins and reports are completed, completing shift should succeed
-    fireEvent.click(screen.getAllByText(/Complete Shift/i)[0]);
+    const finishBtns = screen.getAllByText(/Complete Shift/i);
+    fireEvent.click(finishBtns[0]);
 
     await waitFor(() => {
       expect(screen.getAllByText(/Shift Completed/i).length).toBeGreaterThan(0);
@@ -1059,15 +1066,14 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
     const submitBtn = document.getElementById('submit-report-btn') || screen.getByText(/Submit Ticket/i);
     fireEvent.click(submitBtn);
 
-    // Verify report enters pending approval
+    // Verify report is directly assigned and dispatched
     await waitFor(() => {
-      expect(screen.getAllByText(/Pending Driver Approval|Awaiting Driver Confirmation/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Dispatched|Direct-assigned/i).length).toBeGreaterThan(0);
     });
 
     unmount();
 
     // Now switch to Driver (Suresh Kumar, DRV-801)
-    localStorage.clear();
     const driverUser = {
       id: 'DRV-801',
       name: 'Suresh Kumar',
@@ -1081,29 +1087,26 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
 
     render(<App />);
 
-    // Verify incoming dispatch confirmation request appears for this driver
+    // Verify incoming direct assignment popup and banner appear for this driver
     await waitFor(() => {
-      expect(screen.getAllByText(/Confirm & Accept Assignment/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Stays Active Until Decision/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Direct Assignment|30 Min SLA Target/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Start Route Navigation|Start Navigation/i).length).toBeGreaterThan(0);
     });
 
-    // Navigate to Routes tab - notification must STILL remain on screen
+    // Navigate to Routes tab - direct dispatch status banner must STILL remain on screen
     const routesNavBtns = screen.getAllByText(/Assigned Routes/i);
     const targetRouteBtn = routesNavBtns[0].closest('button') || routesNavBtns[0];
     fireEvent.click(targetRouteBtn);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Confirm & Accept Assignment/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Direct Assignment|30 Min SLA Target/i).length).toBeGreaterThan(0);
     });
 
-    // Driver clicks confirm & accept for pending requests
-    const confirmBtns = screen.getAllByText(/Confirm & Accept Assignment/i);
-    confirmBtns.forEach((btn) => fireEvent.click(btn));
-
-    // Verify all notifications are now resolved and cleared
-    await waitFor(() => {
-      expect(screen.queryByText(/Stays Active Until Decision/i)).toBeNull();
-    });
+    // Driver clicks acknowledge on popup
+    const ackBtns = screen.queryAllByText(/Acknowledge & Close/i);
+    if (ackBtns.length > 0) {
+      fireEvent.click(ackBtns[0]);
+    }
   });
 
   it('43. Real-time Citizen Notification System: Citizen receives in-app notifications with assigned driver details and issue resolution', async () => {

@@ -300,16 +300,26 @@ export const DashboardProvider = ({ children }) => {
 
   // Live Database States (All static data removed, ML hotspots, dustbins and Ahmedabad fleet initialized)
   const [reports, setReports] = useState(() => {
+    let rawReports = DEFAULT_AHMEDABAD_REPORTS.map((r) => ({
+      ...r,
+      assignedDriver: r.assignedDriver || r.assigned_driver || null,
+      citizenName: r.citizenName || r.citizen_name || 'Citizen Resident',
+      citizenPhone: r.citizenPhone || r.citizen_phone || '—',
+    }));
     try {
+      const savedLocal = localStorage.getItem('swaachx_local_reports');
+      if (savedLocal) {
+        rawReports = JSON.parse(savedLocal);
+      }
       const saved = localStorage.getItem('swaachx_resolved_report_ids');
       if (saved) {
         const resolvedIds = new Set(JSON.parse(saved));
-        return DEFAULT_AHMEDABAD_REPORTS.map((r) =>
+        return rawReports.map((r) =>
           resolvedIds.has(r.id) ? { ...r, status: 'Resolved' } : r
         );
       }
     } catch (e) {}
-    return DEFAULT_AHMEDABAD_REPORTS;
+    return rawReports;
   });
   const [vehicles, setVehicles] = useState(DEFAULT_AHMEDABAD_VEHICLES);
   const [citizens, setCitizens] = useState([]);
@@ -626,8 +636,7 @@ export const DashboardProvider = ({ children }) => {
       (r) =>
         r.status !== 'Resolved' &&
         r.status !== 'Dispatched' &&
-        (!r.assignedDriver || r.assignedDriver === 'Unassigned' || r.assignedDriver === null) &&
-        !r.proposedDriver
+        (!r.assignedDriver || r.assignedDriver === 'Unassigned')
     );
 
     if (unassignedTickets.length > 0) {
@@ -644,19 +653,23 @@ export const DashboardProvider = ({ children }) => {
         );
 
         if (match && match.assignedDriver) {
+          const etaMins = Math.min(30, Math.max(5, match.etaMinutes || 15));
           setReports((prev) =>
             prev.map((r) =>
               r.id === rep.id
                 ? {
                     ...r,
-                    status: 'Pending Driver Approval',
-                    assignedDriver: null,
-                    proposedDriver: match.assignedDriver,
-                    proposedBadge: match.badgeId,
-                    proposedVehicleId: match.vehicleId,
+                    status: 'Dispatched',
+                    assignedDriver: match.assignedDriver,
+                    driverName: match.driverName,
+                    driverBadge: match.badgeId,
+                    driverVehicleId: match.vehicleId,
                     vehiclePlate: match.vehiclePlate,
                     distanceKm: match.distanceKm,
-                    etaMinutes: match.etaMinutes,
+                    etaMinutes: etaMins,
+                    slaMinutes: 30,
+                    slaDeadline: r.slaDeadline || new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+                    isDirectAssigned: true,
                   }
                 : r
             )
@@ -1996,11 +2009,13 @@ export const DashboardProvider = ({ children }) => {
     const resolvedWard = newReportData.ward || currentUser?.ward || 'Ahmedabad Central';
     const resolvedLocation = newReportData.location || resolvedWard;
 
-    // AI-driven proximity driver matching: identifies closest operating truck within minutes
+    // AI-driven proximity driver matching: directly identifies and assigns closest operating truck within 30 min
     const driverMatch = findNearestDriverForReport(
       { lat: resolvedLat, lng: resolvedLng, ward: resolvedWard, location: resolvedLocation },
       vehicles
     );
+
+    const etaMins = Math.min(30, Math.max(5, driverMatch.etaMinutes || 15));
 
     const newReport = {
       id: reportId,
@@ -2012,16 +2027,19 @@ export const DashboardProvider = ({ children }) => {
       priority: newReportData.priority || 'High',
       coordinates: { lat: resolvedLat, lng: resolvedLng },
       location: resolvedLocation,
-      proposedDriver: driverMatch.assignedDriver,
-      proposedBadge: driverMatch.badgeId,
-      proposedVehicleId: driverMatch.vehicleId,
+      assignedDriver: driverMatch.assignedDriver,
+      driverName: driverMatch.driverName,
+      driverBadge: driverMatch.badgeId,
+      driverVehicleId: driverMatch.vehicleId,
       vehiclePlate: driverMatch.vehiclePlate,
       distanceKm: driverMatch.distanceKm,
-      etaMinutes: driverMatch.etaMinutes,
+      etaMinutes: etaMins,
+      slaMinutes: 30,
+      slaDeadline: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      isDirectAssigned: true,
       declinedDrivers: [],
       ...newReportData,
-      status: 'Pending Driver Approval',
-      assignedDriver: null,
+      status: 'Dispatched',
     };
 
     // Update in Supabase database
@@ -2040,15 +2058,21 @@ export const DashboardProvider = ({ children }) => {
           description: newReport.description || 'Citizen waste report filed via Swaachx mobile app',
           photo_url: newReport.photoUrl || null,
           priority: newReport.priority,
-          status: 'Pending Verification',
-          assigned_driver: null,
+          status: 'Dispatched',
+          assigned_driver: newReport.assignedDriver,
         });
       } catch (err) {
         console.warn('Supabase report insert error:', err);
       }
     }
 
-    setReports((prev) => [newReport, ...prev]);
+    setReports((prev) => {
+      const updated = [newReport, ...prev];
+      try {
+        localStorage.setItem('swaachx_local_reports', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
 
     // Increment karma points
     if (currentUser?.email) {
@@ -2062,8 +2086,8 @@ export const DashboardProvider = ({ children }) => {
     }
 
     addToast(
-      `🚨 Report #${newReport.id} logged! Sent confirmation request to nearby driver ${driverMatch.driverName} (${driverMatch.badgeId} • ~${driverMatch.distanceKm} km away).`,
-      'info'
+      `🚨 Report #${newReport.id} direct-assigned to nearest driver ${driverMatch.driverName} (${driverMatch.badgeId}) • ETA ~${etaMins} mins (Resolution within 30 min)!`,
+      'success'
     );
   };
 

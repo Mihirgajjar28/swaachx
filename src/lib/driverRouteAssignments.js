@@ -511,32 +511,31 @@ export const getDriverAssignmentProfile = ({
       if (rep.status === 'Pending Driver Approval') return false;
 
       const driverRef = (rep.assignedDriver || rep.assigned_driver || '').toLowerCase();
-      if (
-        driverRef &&
-        (driverRef.includes(matchedCred.name.toLowerCase()) ||
+      if (driverRef && driverRef !== 'unassigned') {
+        return (
+          driverRef.includes(matchedCred.name.toLowerCase()) ||
           driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
-          driverRef.includes(matchedVehicle.id.toLowerCase()))
-      ) {
-        return true;
+          driverRef.includes(matchedVehicle.id.toLowerCase())
+        );
       }
       const loc = (rep.location || '').toLowerCase();
       const ward = (rep.ward || '').toLowerCase();
-      const cat = (rep.category || '').toLowerCase();
-      return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw));
+      return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw));
     });
 
     if (assignedReports.length === 0) {
       assignedReports = DEFAULT_AHMEDABAD_SECTOR_REPORTS.filter((rep) => {
         if (pastCompletedIds.has(rep.id)) return false;
+        const driverRef = (rep.assignedDriver || '').toLowerCase();
+        if (driverRef && driverRef !== 'unassigned') {
+          return (
+            driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
+            driverRef.includes(matchedVehicle.id.toLowerCase())
+          );
+        }
         const loc = (rep.location || '').toLowerCase();
         const ward = (rep.ward || '').toLowerCase();
-        const cat = (rep.category || '').toLowerCase();
-        const driverRef = (rep.assignedDriver || '').toLowerCase();
-        return (
-          driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
-          driverRef.includes(matchedVehicle.id.toLowerCase()) ||
-          territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw) || cat.includes(kw))
-        );
+        return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw));
       });
     }
   }
@@ -613,6 +612,36 @@ export const findNearestDriverForReport = ({ lat, lng, ward = '', location = '' 
 
   const pool = candidates.length > 0 ? candidates : allCandidates;
 
+  const text = `${ward} ${location}`.toLowerCase();
+  const keywordMatched = pool.find((v) => {
+    const route = (v.assignedRoute || v.assigned_route || '').toLowerCase();
+    const vWard = (v.currentWard || v.current_ward || '').toLowerCase();
+    return text.includes('chandlodiya') || text.includes('ranip') || text.includes('gota')
+      ? v.id === 'TRK-AMD-801' || v.id === 'TRK-801' || (v.driverBadge || '').includes('801')
+      : text.includes('satellite') || text.includes('vastrapur') || text.includes('iim')
+      ? v.id === 'TRK-AMD-802' || v.id === 'TRK-802' || (v.driverBadge || '').includes('802')
+      : text.includes('sg highway') || text.includes('thaltej') || text.includes('bodakdev')
+      ? v.id === 'TRK-AMD-803' || v.id === 'TRK-803' || (v.driverBadge || '').includes('803')
+      : text.includes('manek') || text.includes('khadia') || text.includes('walled')
+      ? v.id === 'TRK-AMD-804' || v.id === 'TRK-804' || (v.driverBadge || '').includes('804')
+      : route.includes(text) || vWard.includes(text);
+  });
+
+  if (keywordMatched) {
+    const v = keywordMatched;
+    const driverName = v.driverName || v.driver_name || 'Suresh Kumar';
+    const badgeId = v.driverBadge || v.driver_badge || `DRV-${(v.id || '801').replace(/[^0-9]/g, '') || '801'}`;
+    return {
+      assignedDriver: `${driverName} (${badgeId})`,
+      driverName,
+      badgeId,
+      vehicleId: v.id,
+      vehiclePlate: v.plateNumber || v.plate_number || 'GJ-01-CZ-4821',
+      distanceKm: '1.4',
+      etaMinutes: 12,
+    };
+  }
+
   if (lat && lng) {
     const withDistance = pool.map((v) => {
       const vLat = v.coordinates?.lat || v.latitude || 23.0784;
@@ -647,21 +676,7 @@ export const findNearestDriverForReport = ({ lat, lng, ward = '', location = '' 
     }
   }
 
-  // Fallback: match by sector/ward keywords
-  const text = `${ward} ${location}`.toLowerCase();
-  const matched = pool.find((v) => {
-    const route = (v.assignedRoute || v.assigned_route || '').toLowerCase();
-    const vWard = (v.currentWard || v.current_ward || '').toLowerCase();
-    return text.includes('chandlodiya') || text.includes('ranip') || text.includes('gota')
-      ? v.id === 'TRK-AMD-801' || v.id === 'TRK-801'
-      : text.includes('satellite') || text.includes('vastrapur') || text.includes('iim')
-      ? v.id === 'TRK-AMD-802' || v.id === 'TRK-802'
-      : text.includes('sg highway') || text.includes('thaltej') || text.includes('bodakdev')
-      ? v.id === 'TRK-AMD-803' || v.id === 'TRK-803'
-      : text.includes('manek') || text.includes('khadia') || text.includes('walled')
-      ? v.id === 'TRK-AMD-804' || v.id === 'TRK-804'
-      : route.includes(text) || vWard.includes(text);
-  }) || pool[0];
+  const matched = pool[0];
 
   const driverName = matched?.driverName || matched?.driver_name || 'Suresh Kumar';
   const badgeId = matched?.driverBadge || matched?.driver_badge || 'DRV-801';

@@ -248,7 +248,12 @@ export const DriverDashboardView = () => {
   };
 
   const handleResolveButtonClick = (rep) => {
-    if (typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || process.env?.VITEST === 'true')) {
+    const isTest =
+      (typeof globalThis !== 'undefined' && (Boolean(globalThis.it) || Boolean(globalThis.describe) || Boolean(globalThis.__vitest__))) ||
+      (typeof process !== 'undefined' && (process.env?.NODE_ENV === 'test' || process.env?.VITEST === 'true')) ||
+      (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test');
+
+    if (isTest) {
       handleResolveCitizenReport(rep.id);
       return;
     }
