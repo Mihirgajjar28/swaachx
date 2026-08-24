@@ -464,7 +464,19 @@ export const getDriverAssignmentProfile = ({
       }
     } catch (e) {}
 
-    const sourceReports = (allReports && allReports.length > 0) ? allReports : DEFAULT_AHMEDABAD_SECTOR_REPORTS;
+    let localSavedReports = [];
+    try {
+      const saved = localStorage.getItem('swaachx_local_reports');
+      if (saved) localSavedReports = JSON.parse(saved);
+    } catch (e) {}
+
+    // Combine all unique reports from allReports, localStorage, and default sector reports
+    const combinedMap = new Map();
+    (allReports || []).forEach((r) => { if (r?.id) combinedMap.set(r.id, r); });
+    (localSavedReports || []).forEach((r) => { if (r?.id && !combinedMap.has(r.id)) combinedMap.set(r.id, r); });
+    DEFAULT_AHMEDABAD_SECTOR_REPORTS.forEach((r) => { if (r?.id && !combinedMap.has(r.id)) combinedMap.set(r.id, r); });
+
+    const sourceReports = Array.from(combinedMap.values());
 
     // 1. Live Pending Approval Requests specifically offered to this Driver
     let declinedSet = new Set();
@@ -506,38 +518,56 @@ export const getDriverAssignmentProfile = ({
       });
 
     // 2. Confirmed & Assigned reports for this driver
-    assignedReports = sourceReports.filter((rep) => {
-      if (pastCompletedIds.has(rep.id)) return false;
-      if (rep.status === 'Pending Driver Approval') return false;
-
-      const driverRef = (rep.assignedDriver || rep.assigned_driver || '').toLowerCase();
-      if (driverRef && driverRef !== 'unassigned') {
-        return (
-          driverRef.includes(matchedCred.name.toLowerCase()) ||
-          driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
-          driverRef.includes(matchedVehicle.id.toLowerCase())
-        );
-      }
-      const loc = (rep.location || '').toLowerCase();
-      const ward = (rep.ward || '').toLowerCase();
-      return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw));
-    });
-
-    if (assignedReports.length === 0) {
-      assignedReports = DEFAULT_AHMEDABAD_SECTOR_REPORTS.filter((rep) => {
+    assignedReports = sourceReports
+      .filter((rep) => {
         if (pastCompletedIds.has(rep.id)) return false;
-        const driverRef = (rep.assignedDriver || '').toLowerCase();
+
+        const driverRef = (
+          rep.assignedDriver ||
+          rep.assigned_driver ||
+          rep.driverVehicleId ||
+          rep.driver_vehicle_id ||
+          rep.driverBadge ||
+          rep.driver_badge ||
+          rep.driverName ||
+          rep.driver_name ||
+          ''
+        ).toLowerCase();
+
+        const myBadge = (matchedCred.badgeId || '').toLowerCase();
+        const myName = (matchedCred.name || '').toLowerCase();
+        const myVeh = (matchedVehicle.id || '').toLowerCase();
+        const myPlate = (matchedVehicle.plateNumber || '').toLowerCase();
+
         if (driverRef && driverRef !== 'unassigned') {
-          return (
-            driverRef.includes(matchedCred.badgeId.toLowerCase()) ||
-            driverRef.includes(matchedVehicle.id.toLowerCase())
-          );
+          const isMatched =
+            driverRef.includes(myBadge) ||
+            driverRef.includes(myName) ||
+            driverRef.includes(myVeh) ||
+            (myPlate && driverRef.includes(myPlate)) ||
+            (rep.driverVehicleId && rep.driverVehicleId.toLowerCase() === myVeh) ||
+            (rep.driverBadge && rep.driverBadge.toLowerCase() === myBadge);
+
+          if (isMatched) return true;
+          return false;
         }
+
         const loc = (rep.location || '').toLowerCase();
         const ward = (rep.ward || '').toLowerCase();
         return territoryConfig.sectorKeywords.some((kw) => loc.includes(kw) || ward.includes(kw));
+      })
+      .map((rep) => {
+        if (rep.distanceKm && rep.etaMinutes) return rep;
+        const repLat = rep.coordinates?.lat || rep.latitude;
+        const repLng = rep.coordinates?.lng || rep.longitude;
+        const dKm = calculateDistanceKm(matchedVehicle.coordinates?.lat, matchedVehicle.coordinates?.lng, repLat, repLng);
+        const eta = Math.min(30, Math.max(3, Math.round(dKm * 3.5)));
+        return {
+          ...rep,
+          distanceKm: rep.distanceKm || dKm,
+          etaMinutes: rep.etaMinutes || eta,
+        };
       });
-    }
   }
 
   // 6. Compute Route Metrics

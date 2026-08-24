@@ -504,7 +504,19 @@ export const DashboardProvider = ({ children }) => {
             createdAt: r.created_at,
           };
         });
-        setReports(formattedReports);
+
+        // Merge locally submitted reports that may not have synced to Supabase yet
+        let localSavedReports = [];
+        try {
+          const raw = localStorage.getItem('swaachx_local_reports');
+          if (raw) localSavedReports = JSON.parse(raw);
+        } catch (e) {}
+
+        const remoteIds = new Set(formattedReports.map((r) => r.id));
+        const missingLocalReports = localSavedReports.filter((r) => !remoteIds.has(r.id));
+        const combinedReports = [...missingLocalReports, ...formattedReports];
+
+        setReports(combinedReports);
 
         // Record initial database baseline silently to eliminate refresh notification popups
         if (!isInitialDatabaseLoadedRef.current) {
@@ -2034,6 +2046,7 @@ export const DashboardProvider = ({ children }) => {
     const etaMins = Math.min(30, Math.max(5, driverMatch.etaMinutes || 15));
 
     const newReport = {
+      ...newReportData,
       id: reportId,
       createdAt: new Date().toISOString(),
       citizenName: currentUser?.name || newReportData.citizenName || newReportData.reporterName || 'Citizen Resident',
@@ -2054,7 +2067,6 @@ export const DashboardProvider = ({ children }) => {
       slaDeadline: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       isDirectAssigned: true,
       declinedDrivers: [],
-      ...newReportData,
       status: 'Dispatched',
     };
 
