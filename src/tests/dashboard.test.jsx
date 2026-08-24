@@ -1090,10 +1090,10 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
     // Verify incoming direct assignment popup and banner appear for this driver
     await waitFor(() => {
       expect(screen.getAllByText(/Direct Assignment|30 Min SLA Target/i).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Start Route Navigation|Start Navigation/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Start Navigation|Navigate & Trace/i).length).toBeGreaterThan(0);
     });
 
-    // Navigate to Routes tab - direct dispatch status banner must STILL remain on screen
+    // Navigate to Routes tab - direct dispatch status banner remains accessible
     const routesNavBtns = screen.getAllByText(/Assigned Routes/i);
     const targetRouteBtn = routesNavBtns[0].closest('button') || routesNavBtns[0];
     fireEvent.click(targetRouteBtn);
@@ -1102,10 +1102,10 @@ describe('Smart Waste Management: Direct Credentials Authentication Tests', () =
       expect(screen.getAllByText(/Direct Assignment|30 Min SLA Target/i).length).toBeGreaterThan(0);
     });
 
-    // Driver clicks acknowledge on popup
-    const ackBtns = screen.queryAllByText(/Acknowledge & Close/i);
-    if (ackBtns.length > 0) {
-      fireEvent.click(ackBtns[0]);
+    // Driver closes popup notification
+    const closeBtn = document.getElementById('close-assignment-popup-btn') || screen.queryByLabelText(/Close notification/i);
+    if (closeBtn) {
+      fireEvent.click(closeBtn);
     }
   });
 

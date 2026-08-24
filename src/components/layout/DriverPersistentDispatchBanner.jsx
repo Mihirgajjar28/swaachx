@@ -441,6 +441,8 @@ export const DriverPersistentDispatchBanner = () => {
 
               <button
                 onClick={() => handleAcknowledge(activePopupReport.id)}
+                id="close-assignment-popup-btn"
+                aria-label="Close notification"
                 style={{
                   background: 'rgba(255, 255, 255, 0.15)',
                   border: 'none',
@@ -608,43 +610,6 @@ export const DriverPersistentDispatchBanner = () => {
                   />
                 </MapContainer>
               </div>
-            </div>
-
-            {/* Modal Footer Controls */}
-            <div
-              style={{
-                padding: '14px 20px',
-                background: 'var(--bg-surface-elevated)',
-                borderTop: '1px solid var(--border-subtle)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '10px',
-              }}
-            >
-              <button
-                onClick={() => handleAcknowledge(activePopupReport.id)}
-                className="btn btn-ghost"
-                style={{ fontSize: '12px', fontWeight: 600 }}
-              >
-                Acknowledge & Close
-              </button>
-
-              <button
-                onClick={() => handleStartNavigation(activePopupReport)}
-                className="btn btn-primary"
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 800,
-                  padding: '10px 18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <Navigation size={15} />
-                <span>Start Route Navigation</span>
-              </button>
             </div>
           </div>
         </div>
