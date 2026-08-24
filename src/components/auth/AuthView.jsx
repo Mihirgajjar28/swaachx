@@ -1070,37 +1070,6 @@ export const AuthView = () => {
           </form>
         )}
 
-        {/* Municipal Administrator Gateway Link */}
-        <div
-          style={{
-            padding: '12px 24px',
-            borderTop: '1px solid var(--border-subtle)',
-            background: 'rgba(15, 23, 42, 0.03)',
-            textAlign: 'center',
-            borderRadius: '0 0 var(--radius-xl) var(--radius-xl)',
-          }}
-        >
-          <button
-            type="button"
-            onClick={openAdminLogin}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-muted)',
-              fontSize: '11px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'color 0.2s ease',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#0284c7')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
-          >
-            <span>🏛️ Municipal Official / Admin Login Gateway</span>
-          </button>
-        </div>
       </div>
 
       {/* Admin Login Modal */}
